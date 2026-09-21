@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Simulado de Inteligencia Artificial com 35 questoes objetivas corrigidas na hora e 4 discursivas.">
+  <title>Simulado — Inteligência Artificial</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E📝%3C/text%3E%3C/svg%3E">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;}
+    html{-webkit-text-size-adjust:100%;}
+    body{margin:0;}
+    img,svg,video{max-width:100%;height:auto;}
+    button,input,select,textarea{font:inherit;color:inherit;}
+    table{border-collapse:collapse;}
+  </style>
+</head>
+<body>
+<style>
+:root{
+  --paper:#EFEDF2; --surface:#FBFAFD; --surface-2:#E7E4EE;
+  --ink:#1B1622; --ink-soft:#5D5670; --line:#D6D1E0; --grid:#DFDAE8;
+  --accent:#8A2D6E; --accent-soft:#F4DCEE; --accent-ink:#FFFFFF;
+  --amber:#A65A0B; --amber-soft:#F7E6D2;
+  --ok:#1B6B49; --ok-soft:#DCEFE4; --bad:#A32741; --bad-soft:#F7DDE3;
+  --wall:#2A2333;
+  --shadow:0 1px 2px rgba(27,22,34,.06), 0 8px 24px -12px rgba(27,22,34,.18);
+  --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Menlo,Consolas,monospace;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --display:Georgia,"Iowan Old Style","Palatino Linotype","Times New Roman",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#141119; --surface:#1D1926; --surface-2:#272232;
+    --ink:#EDE9F4; --ink-soft:#ABA2BE; --line:#332C41; --grid:#221D2C;
+    --accent:#E98FCE; --accent-soft:#3F1B37; --accent-ink:#1B1622;
+    --amber:#E7A45C; --amber-soft:#3A2A18;
+    --ok:#5FD3A0; --ok-soft:#173327; --bad:#F2879E; --bad-soft:#3A1822;
+    --wall:#0B0910;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141119; --surface:#1D1926; --surface-2:#272232;
+  --ink:#EDE9F4; --ink-soft:#ABA2BE; --line:#332C41; --grid:#221D2C;
+  --accent:#E98FCE; --accent-soft:#3F1B37; --accent-ink:#1B1622;
+  --amber:#E7A45C; --amber-soft:#3A2A18;
+  --ok:#5FD3A0; --ok-soft:#173327; --bad:#F2879E; --bad-soft:#3A1822;
+  --wall:#0B0910;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+:root[data-theme="light"]{
+  --paper:#EFEDF2; --surface:#FBFAFD; --surface-2:#E7E4EE;
+  --ink:#1B1622; --ink-soft:#5D5670; --line:#D6D1E0; --grid:#DFDAE8;
+  --accent:#8A2D6E; --accent-soft:#F4DCEE; --accent-ink:#FFFFFF;
+  --amber:#A65A0B; --amber-soft:#F7E6D2;
+  --ok:#1B6B49; --ok-soft:#DCEFE4; --bad:#A32741; --bad-soft:#F7DDE3;
+  --wall:#2A2333;
+  --shadow:0 1px 2px rgba(27,22,34,.06), 0 8px 24px -12px rgba(27,22,34,.18);
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--body); font-size:16.5px; line-height:1.6;
+  background-image:
+    repeating-linear-gradient(to right, var(--grid) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(to bottom, var(--grid) 0 1px, transparent 1px 28px);
+  -webkit-font-smoothing:antialiased;
+}
+.page{max-width:780px; margin:0 auto; padding:0 20px 90px;}
+
+.masthead{padding:52px 0 24px; border-bottom:2px solid var(--ink); margin-bottom:8px;}
+.eyebrow{font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-soft); margin:0 0 12px;}
+h1{font-family:var(--display); font-weight:700; font-size:clamp(2.1rem,5.5vw,3.2rem);
+  line-height:1.05; letter-spacing:-.02em; margin:0 0 14px; text-wrap:balance;}
+h1 em{font-style:italic; color:var(--accent);}
+.lede{font-size:1.05rem; color:var(--ink-soft); margin:0; max-width:58ch;}
+
+/* ---- placar fixo ---- */
+.scorebar{
+  position:sticky; top:0; z-index:20; background:var(--paper);
+  border-bottom:1px solid var(--line); padding:11px 0 10px; margin-bottom:30px;
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+}
+.track{flex:1; min-width:150px; height:5px; background:var(--surface-2); border-radius:3px; overflow:hidden;}
+.track span{display:block; height:100%; width:0; background:var(--accent); transition:width .3s;}
+@media (prefers-reduced-motion:reduce){ .track span{transition:none;} }
+.tally{font-family:var(--mono); font-size:.78rem; letter-spacing:.06em; color:var(--ink-soft);
+  font-variant-numeric:tabular-nums; white-space:nowrap;}
+.tally b{color:var(--ink);}
+.tally .hit{color:var(--ok);} .tally .miss{color:var(--bad);}
+
+.parte{
+  font-family:var(--mono); font-size:.7rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent); margin:46px 0 4px; padding-top:8px;
+}
+.parte:first-of-type{margin-top:26px;}
+h2{font-family:var(--display); font-size:1.5rem; letter-spacing:-.012em; margin:0 0 6px;}
+.parte-sub{color:var(--ink-soft); font-size:.92rem; margin:0 0 20px;}
+
+/* ---- questão ---- */
+.q{
+  background:var(--surface); border:1px solid var(--line); border-radius:4px;
+  padding:20px 22px; margin-bottom:16px; box-shadow:var(--shadow);
+}
+.q-num{font-family:var(--mono); font-size:.7rem; letter-spacing:.1em; color:var(--ink-soft);
+  text-transform:uppercase; display:block; margin-bottom:9px;}
+.q-num .kind{color:var(--accent);}
+.stem{margin:0 0 15px; font-size:1rem;}
+.stem code, .opt code, .why code{font-family:var(--mono); font-size:.87em;
+  background:var(--surface-2); padding:.1em .34em; border-radius:2px;}
+.stem strong{font-weight:650;}
+
+.figure{margin:0 0 15px;}
+.mini{display:grid; grid-template-columns:repeat(7,26px); gap:2px;}
+.mini i{
+  width:26px; height:26px; border-radius:2px; background:var(--surface-2); border:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:.66rem; font-style:normal; font-weight:700; color:var(--ink-soft);
+}
+.mini i.w{background:var(--wall); border-color:var(--wall);}
+.mini i.s, .mini i.g{border-color:var(--accent); color:var(--accent);}
+.figcap{font-family:var(--mono); font-size:.7rem; color:var(--ink-soft); margin:7px 0 0;}
+
+.graph{font-family:var(--mono); font-size:.82rem; background:var(--surface-2); border:1px solid var(--line);
+  border-radius:3px; padding:12px 14px; margin:0 0 15px; overflow-x:auto; line-height:1.75;}
+.graph b{color:var(--accent);}
+
+.opts{display:grid; gap:7px;}
+.opt{
+  display:flex; gap:11px; align-items:flex-start; width:100%; text-align:left;
+  background:var(--surface-2); border:1px solid var(--line); border-radius:3px;
+  padding:11px 13px; font-family:inherit; font-size:.94rem; line-height:1.5; color:var(--ink);
+  cursor:pointer; transition:border-color .15s, background .15s;
+}
+.opt:hover:not(:disabled){border-color:var(--accent);}
+.opt:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.opt:disabled{cursor:default;}
+.opt .letra{
+  font-family:var(--mono); font-size:.76rem; font-weight:700; color:var(--ink-soft);
+  border:1px solid var(--line); border-radius:2px; width:21px; height:21px; flex:none;
+  display:flex; align-items:center; justify-content:center; margin-top:1px; background:var(--surface);
+}
+.opt.certa{background:var(--ok-soft); border-color:var(--ok);}
+.opt.certa .letra{background:var(--ok); border-color:var(--ok); color:var(--surface);}
+.opt.errada{background:var(--bad-soft); border-color:var(--bad);}
+.opt.errada .letra{background:var(--bad); border-color:var(--bad); color:var(--surface);}
+
+.why{
+  margin:13px 0 0; padding:13px 15px; border-radius:3px; font-size:.92rem;
+  background:var(--surface-2); border:1px solid var(--line); display:none;
+}
+.q.resolvida .why{display:block;}
+.why .verdict{font-family:var(--mono); font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+  display:block; margin-bottom:6px;}
+.why.ok .verdict{color:var(--ok);} .why.no .verdict{color:var(--bad);}
+.why p{margin:0 0 8px;} .why p:last-child{margin:0;}
+.why .ref{font-size:.85rem; color:var(--ink-soft);}
+
+.disc-btn{
+  background:none; border:1px dashed var(--line); color:var(--ink-soft); border-radius:3px;
+  padding:9px 14px; font-family:inherit; font-size:.88rem; cursor:pointer; width:100%; text-align:left;
+}
+.disc-btn:hover{border-color:var(--accent); color:var(--accent);}
+.disc-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.modelo{display:none; margin-top:13px; padding:14px 16px; background:var(--accent-soft);
+  border:1px solid var(--accent); border-radius:3px; font-size:.93rem;}
+.q.aberta .modelo{display:block;}
+.q.aberta .disc-btn{display:none;}
+.modelo .verdict{font-family:var(--mono); font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--accent); display:block; margin-bottom:7px;}
+.modelo ul{margin:8px 0 0; padding-left:20px;}
+.modelo li{margin-bottom:5px;}
+.modelo p{margin:0 0 8px;}
+
+/* ---- resultado ---- */
+.result{
+  margin-top:40px; padding:26px; border:2px solid var(--ink); border-radius:4px;
+  background:var(--surface); display:none;
+}
+.result.on{display:block;}
+.result h3{font-family:var(--display); font-size:1.6rem; margin:0 0 6px;}
+.big{font-family:var(--mono); font-size:2.6rem; font-weight:700; color:var(--accent);
+  font-variant-numeric:tabular-nums; line-height:1; margin:0 0 4px;}
+.result p{margin:0 0 12px; color:var(--ink-soft);}
+.weak{margin:16px 0 0; padding:0; list-style:none;}
+.weak li{font-size:.9rem; padding:7px 0; border-top:1px solid var(--line); display:flex; gap:10px;}
+.weak li span:first-child{font-family:var(--mono); font-size:.76rem; color:var(--bad); flex:none; width:56px;}
+
+.actions{display:flex; gap:9px; flex-wrap:wrap; margin-top:20px;}
+.act{background:var(--ink); color:var(--paper); border:1px solid var(--ink); border-radius:2px;
+  padding:9px 17px; font-family:inherit; font-size:.9rem; font-weight:550; cursor:pointer;}
+.act.ghost{background:transparent; color:var(--ink-soft); border-color:var(--line);}
+.act:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+footer{margin-top:54px; padding-top:20px; border-top:1px solid var(--line);
+  font-size:.85rem; color:var(--ink-soft);}
+footer a{color:var(--accent);}
+</style>
+
+<div class="page">
+
+<header class="masthead">
+  <p class="eyebrow">Simulado · Inteligência Artificial</p>
+  <h1>39 questões no <em>estilo da prova</em>.</h1>
+  <p class="lede">Peso concentrado em busca, como o professor avisou: 20 das 35 objetivas são de algoritmos de busca. Responda antes de olhar o gabarito — cada alternativa marcada é corrigida na hora, com a explicação do porquê. No fim, 4 discursivas com o roteiro do que ele espera ver.</p>
+</header>
+
+<div class="scorebar">
+  <div class="track"><span id="bar"></span></div>
+  <div class="tally" id="tally">respondidas <b>0</b>/35 · <span class="hit">0 certas</span> · <span class="miss">0 erradas</span></div>
+</div>
+
+<main id="quiz"></main>
+
+<div class="result" id="result">
+  <h3>Resultado</h3>
+  <p class="big" id="pct">—</p>
+  <p id="verdito"></p>
+  <ul class="weak" id="weak"></ul>
+  <div class="actions">
+    <button class="act" id="again">Refazer o simulado</button>
+    <button class="act ghost" id="top">Voltar ao topo</button>
+  </div>
+</div>
+
+<footer>
+  <p>As 4 questões discursivas não entram no placar — compare sua resposta com o roteiro esperado. Conteúdo tirado dos nove decks da disciplina; bibliografia: Russell &amp; Norvig, <em>Inteligência Artificial: Uma Abordagem Moderna</em>, 2022.</p>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var MAZE = ["S..#...","##.#.#.",".....#.",".###.#.","......G"];
+
+  function mazeHTML(caption){
+    var h = '<div class="figure"><div class="mini">';
+    for (var r=0;r<MAZE.length;r++){
+      for (var c=0;c<MAZE[r].length;c++){
+        var ch = MAZE[r][c];
+        var cls = ch === "#" ? "w" : (ch === "S" ? "s" : (ch === "G" ? "g" : ""));
+        h += '<i class="' + cls + '">' + (ch === "#" || ch === "." ? "" : ch) + '</i>';
+      }
+    }
+    h += '</div><p class="figcap">' + caption + '</p></div>';
+    return h;
+  }
+
+  var GRAFO_ABC =
+    '<div class="graph">' +
+    'Grafo não ponderado, A é a raiz:<br>' +
+    '<b>A</b> → B, C &nbsp;&nbsp; <b>B</b> → D, E &nbsp;&nbsp; <b>C</b> → F, G<br>' +
+    '<b>D</b> → H &nbsp;&nbsp; <b>E</b> → H &nbsp;&nbsp; <b>F</b> → I &nbsp;&nbsp; <b>G</b> → I' +
+    '</div>';
+
+  var GRAFO_DIJ =
+    '<div class="graph">' +
+    'Arestas com peso, partindo de <b>A</b>:<br>' +
+    'A–B = 5 &nbsp; A–C = 4 &nbsp; C–B = 6<br>' +
+    'B–D = 3 &nbsp; C–D = 2 &nbsp; C–E = 4 &nbsp; D–E = 5' +
+    '</div>';
+
+  var GRAFO_GUL =
+    '<div class="graph">' +
+    'Heurísticas: <b>h(A)=15</b> &nbsp; h(B)=12 &nbsp; h(C)=10 &nbsp; h(D)=7 &nbsp; h(E)=11 &nbsp; <b>h(G)=0</b><br>' +
+    'Sucessores: A → B, C &nbsp;&nbsp; C → D, E &nbsp;&nbsp; D → G' +
+    '</div>';
+
+  var Q = [
+
+  /* ===================== PARTE I — BUSCA CEGA ===================== */
+  {parte:"Parte I — Busca cega", sub:"Aula 07. Se a prova tiver questão de traçar algoritmo à mão, é aqui.", novaParte:true,
+   tipo:"mc",
+   stem:"Qual estrutura de dados caracteriza a busca em largura (BFS) e a busca em profundidade (DFS), respectivamente?",
+   opts:["Fila (FIFO) e pilha (LIFO)",
+         "Pilha (LIFO) e fila (FIFO)",
+         "Fila de prioridade e fila (FIFO)",
+         "Lista ligada e árvore binária"],
+   ok:0,
+   why:"A BFS usa <strong>fila</strong>: o primeiro que entra é o primeiro que sai, o que faz a exploração acontecer nível por nível. A DFS usa <strong>pilha</strong>: o último que entra sai primeiro, o que faz ela mergulhar em um ramo até o fim."},
+
+  {tipo:"mc",
+   stem:"Sobre o grafo abaixo, qual é a <strong>ordem de visita</strong> produzida pela BFS a partir de A?",
+   extra:GRAFO_ABC,
+   opts:["A, B, D, H, E, C, F, I, G",
+         "A, B, C, D, E, F, G, H, I",
+         "A, C, B, G, F, E, D, I, H",
+         "A, B, C, D, H, E, F, G, I"],
+   ok:1,
+   why:"A BFS lê o grafo nível a nível: nível 0 = A; nível 1 = B, C; nível 2 = D, E, F, G; nível 3 = H, I. A ordem de visita é literalmente essa leitura. <span class='ref'>Cuidado com a alternativa “A, B, D, H, E, C, F, I, G” — aquela é a ordem da DFS.</span>"},
+
+  {tipo:"mc",
+   stem:"No mesmo grafo, qual é a ordem de visita da <strong>DFS</strong> a partir de A?",
+   extra:GRAFO_ABC,
+   opts:["A, B, C, D, E, F, G, H, I",
+         "A, B, D, H, E, C, F, I, G",
+         "A, B, D, E, H, C, F, G, I",
+         "A, C, F, I, G, B, D, H, E"],
+   ok:1,
+   why:"A DFS desce por B até o fundo (B → D → H), volta e pega E, só então retorna para C e desce por F → I, terminando em G. Repare que ela <strong>abandona o nível 1 pela metade</strong>: vai de B direto ao fundo sem sequer olhar para C."},
+
+  {tipo:"mc",
+   stem:"A ordem de exploração dos vizinhos adotada em aula é <strong>cima → direita → baixo → esquerda</strong>. Para que a DFS <em>explore</em> nessa ordem, em que ordem os vizinhos devem ser colocados na pilha?",
+   opts:["Na mesma ordem: cima, direita, baixo, esquerda",
+         "Na ordem inversa: esquerda, baixo, direita, cima",
+         "Em ordem alfabética das coordenadas",
+         "A ordem de inserção não altera o resultado"],
+   ok:1,
+   why:"Como a pilha devolve o <strong>último</strong> que entrou, é preciso empilhar ao contrário para desempilhar na ordem desejada. Se você empilhar na ordem direta, a DFS vai explorar de trás para frente e o caminho encontrado muda."},
+
+  {tipo:"mc",
+   stem:"Por que a BFS garante o caminho de menor número de passos e a DFS não?",
+   opts:["Porque a BFS ordena os nós por custo antes de expandir",
+         "Porque a BFS usa heurística para estimar a distância ao objetivo",
+         "Porque a BFS só chega à profundidade k+1 depois de esgotar a profundidade k, então toca o objetivo pela primeira vez pelo caminho mais curto",
+         "Porque a DFS não usa tabela de pais e por isso perde o caminho"],
+   ok:2,
+   why:"É consequência direta da expansão por níveis. A DFS pode encontrar o objetivo no fundo de um desvio longo antes de considerar o caminho curto. <strong>Atenção à ressalva:</strong> a BFS é ótima em grafo <em>não ponderado</em> — com pesos diferentes, quem garante é o Dijkstra."},
+
+  {tipo:"mc",
+   stem:"Durante a execução, cada estado registra “quem me descobriu”. Para que serve essa estrutura?",
+   opts:["Para calcular a heurística de cada nó",
+         "Para reconstruir o caminho de trás para frente quando o objetivo é encontrado",
+         "Para evitar que o algoritmo expanda nós repetidos",
+         "Para ordenar a fila de prioridade"],
+   ok:1,
+   why:"É a <strong>tabela de pais</strong>. Nenhum algoritmo devolve o caminho durante a busca: ao achar o objetivo, segue-se <code>(4,6) ← (4,5) ← (4,4) …</code> até o estado inicial e inverte-se a lista. <span class='ref'>Quem evita repetição é o conjunto de visitados — não confunda os dois.</span>"},
+
+  {tipo:"mc",
+   stem:"No labirinto da aula, a BFS encontra um caminho de 10 movimentos e a DFS um de 14. O que explica a diferença?",
+   extra:mazeHTML("S = (0,0) · G = (4,6) · células escuras são paredes"),
+   opts:["A DFS encontrou um caminho inválido que atravessa paredes",
+         "A DFS seguiu um ramo até o fim (subindo pelo lado direito) e achou o objetivo por lá, sem nunca comparar com alternativas mais curtas",
+         "A BFS usa a distância de Manhattan e por isso vai direto",
+         "A DFS visitou menos nós, então precisou de mais passos"],
+   ok:1,
+   why:"A DFS achou o objetivo descendo pela coluna 6, depois de subir por <code>(1,4) → (0,4) → (0,5) → (0,6)</code>. Ela <strong>para no primeiro caminho que encontra</strong>, sem garantia nenhuma de que seja o menor. A BFS, expandindo por níveis, só podia achar o de 10."},
+
+  {tipo:"mc",
+   stem:"Na BFS, em que momento um estado deve ser marcado como visitado?",
+   opts:["Ao ser desenfileirado, no momento da expansão",
+         "Ao ser enfileirado, no momento em que é descoberto",
+         "Somente quando todos os seus vizinhos já tiverem sido expandidos",
+         "Ao final da execução, junto com a reconstrução do caminho"],
+   ok:1,
+   why:"Marcar ao <strong>enfileirar</strong>. Se você marcar só na expansão, o mesmo estado pode ser descoberto por vários vizinhos e entrar na fila várias vezes — a ordem de visita muda e o traçado à mão sai errado. É o erro mais comum nessa questão."},
+
+  /* ============ PARTE II — CUSTO E INFORMADA ============ */
+  {parte:"Parte II — Busca por custo e informada", sub:"Aula 08. Dijkstra, heurísticas, gulosa e A* — a parte mais pesada.", novaParte:true,
+   tipo:"mc",
+   stem:"Associe corretamente a função de avaliação a cada algoritmo.",
+   opts:["Dijkstra: f(n)=h(n) · Gulosa: f(n)=g(n) · A*: f(n)=g(n)+h(n)",
+         "Dijkstra: f(n)=g(n) · Gulosa: f(n)=h(n) · A*: f(n)=g(n)+h(n)",
+         "Dijkstra: f(n)=g(n)+h(n) · Gulosa: f(n)=h(n) · A*: f(n)=g(n)",
+         "Os três usam f(n)=g(n)+h(n), mudando só a estrutura de dados"],
+   ok:1,
+   why:"<strong>Dijkstra</strong> olha só para trás (custo acumulado, <code>g</code>). <strong>Gulosa</strong> olha só para frente (estimativa, <code>h</code>). <strong>A*</strong> soma os dois. Essa tríade é praticamente garantia de cair."},
+
+  {tipo:"mc",
+   stem:"Qual das buscas abaixo <strong>não</strong> é considerada informada (heurística)?",
+   opts:["Busca gulosa (Greedy Best-First)","A*","Dijkstra","Todas as três são informadas"],
+   ok:2,
+   why:"O Dijkstra é <strong>cego</strong>: ele não faz ideia de onde está o objetivo, só acumula o custo já percorrido e expande sempre o mais barato até aqui. Informada é a busca que usa <code>h(n)</code> — só a gulosa e o A*. <span class='ref'>Pegadinha clássica: muita gente marca o Dijkstra como informado porque ele “usa números”.</span>"},
+
+  {tipo:"mc",
+   stem:"Calcule a <strong>distância de Manhattan</strong> entre (1,2) e o objetivo (4,6).",
+   opts:["5","7","9","11"],
+   ok:1, fixa:true,
+   why:"<code>h = |1−4| + |2−6| = 3 + 4 = <strong>7</strong></code>. Soma-se o deslocamento vertical com o horizontal — nada de raiz quadrada, que é a euclidiana."},
+
+  {tipo:"mc",
+   stem:"Ainda com objetivo em (4,6): qual célula tem <strong>h = 4</strong> pela distância de Manhattan?",
+   opts:["(2,4)","(0,2)","(3,4)","(4,1)"],
+   ok:0,
+   why:"<code>|2−4| + |4−6| = 2 + 2 = 4</code>. Conferindo as outras: (0,2) dá 4+4 = 8; (3,4) dá 1+2 = 3; (4,1) dá 0+5 = 5."},
+
+  {tipo:"mc",
+   stem:"Para A = (0,0) e G = (2,3), quais são respectivamente a distância de Manhattan e a euclidiana?",
+   opts:["5 e 3,61","3,61 e 5","5 e 13","6 e 3,61"],
+   ok:0,
+   why:"Manhattan: <code>|0−2| + |0−3| = 5</code>. Euclidiana: <code>√((0−2)² + (0−3)²) = √13 ≈ 3,61</code>. A leitura da aula: “se eu pudesse ir direto seriam ~3,61; só andando na horizontal e vertical, preciso de pelo menos 5 movimentos”. A euclidiana é <strong>sempre ≤</strong> a Manhattan."},
+
+  {tipo:"mc",
+   stem:"Aplique o <strong>Dijkstra</strong> partindo de A no grafo abaixo. Qual a distância mínima até E e por qual caminho?",
+   extra:GRAFO_DIJ,
+   opts:["8, pelo caminho A → C → E",
+         "6, pelo caminho A → C → D",
+         "11, pelo caminho A → C → D → E",
+         "9, pelo caminho A → B → D → E"],
+   ok:0,
+   why:"A tabela fecha em A=0, C=4, B=5, D=6 (via C, pois 4+2 &lt; 5+3), e E=8 <strong>via C</strong> (4+4), já que via D daria 6+5 = 11. <span class='ref'>O valor 6 é a distância até D, não até E — é exatamente a confusão que existe no slide 8 da aula.</span>"},
+
+  {tipo:"mc",
+   stem:"Quais são, na ordem, os três passos do algoritmo de Dijkstra?",
+   opts:["Calcular h, somar f, escolher o menor f",
+         "Inicialização (origem 0, resto ∞), escolha do não visitado de menor distância, relaxamento das arestas",
+         "Enfileirar a origem, desenfileirar o primeiro, marcar visitado",
+         "Ordenar todas as arestas, remover ciclos, montar a árvore geradora"],
+   ok:1,
+   why:"E no <strong>relaxamento</strong> está o detalhe que vale ponto: para cada vizinho <code>v</code>, se <code>dist(u) + peso(u,v)</code> for menor que a distância registrada, atualiza-se a distância <strong>e o pai</strong>. Esquecer de atualizar o pai é erro comum."},
+
+  {tipo:"mc",
+   stem:"Aplique a <strong>busca gulosa</strong> a partir de A. Qual caminho ela encontra até G?",
+   extra:GRAFO_GUL,
+   opts:["A → B → D → G","A → C → E → G","A → C → D → G","A → C → B → D → G"],
+   ok:2,
+   why:"Passo 1: de A, candidatos B(12) e C(10) → escolhe <strong>C</strong>. Passo 2: fronteira B(12), D(7), E(11) → escolhe <strong>D</strong>. Passo 3: fronteira B(12), E(11), G(0) → escolhe <strong>G</strong>. Note que a cada passo se compara <em>toda</em> a fronteira, incluindo nós antigos — não só os filhos do nó atual."},
+
+  {tipo:"mc",
+   stem:"Qual é a principal limitação da busca gulosa?",
+   opts:["Ela é lenta porque precisa calcular g(n) e h(n) para cada nó",
+         "Ela ignora o custo já percorrido, podendo seguir um caminho que aponta para o objetivo mas sai muito mais caro — não é ótima",
+         "Ela só funciona em grafos sem pesos nas arestas",
+         "Ela sempre encontra o caminho ótimo, mas gasta muita memória"],
+   ok:1,
+   why:"Gulosa = <code>f(n) = h(n)</code>, e só. Ela vai para onde <em>parece</em> mais perto, sem levar em conta o quanto já gastou para chegar ali. Pode entrar num corredor que aponta para o alvo e terminar num beco. Não é ótima e nem sempre completa."},
+
+  {tipo:"mc",
+   stem:"O que o A* faz durante a execução que a busca gulosa <strong>não</strong> faz?",
+   opts:["Usa uma fila de prioridade em vez de uma fila comum",
+         "Calcula a heurística de cada vizinho antes de expandir",
+         "Mantém uma tabela de custos e pais que pode ser atualizada quando descobre um caminho mais barato para um nó já conhecido",
+         "Marca os nós visitados para não entrar em ciclo"],
+   ok:2,
+   why:"É o passo 5 do roteiro da aula. Se aparecer um caminho melhor para um nó já visto, o A* <strong>reescreve</strong> o <code>g</code> e o pai daquele nó. A gulosa nunca revisa, porque não acompanha custo nenhum. <span class='ref'>As outras alternativas descrevem coisas que a gulosa também faz.</span>"},
+
+  {tipo:"mc",
+   stem:"O que acontece com o A* se a heurística for <code>h(n) = 0</code> para todos os nós?",
+   opts:["Ele passa a se comportar como o algoritmo de Dijkstra",
+         "Ele passa a se comportar como a busca gulosa",
+         "Ele deixa de encontrar solução",
+         "Ele passa a se comportar como a DFS"],
+   ok:0,
+   why:"Com <code>h = 0</code>, <code>f(n) = g(n) + 0 = g(n)</code> — que é exatamente o critério do Dijkstra. Pelo outro lado: ignorando o <code>g</code>, sobra <code>f(n) = h(n)</code>, que é a gulosa. <strong>O A* é a generalização dos dois.</strong>"},
+
+  {tipo:"mc",
+   stem:"O que significa dizer que uma heurística é <strong>admissível</strong>, e por que isso importa?",
+   opts:["Que ela é rápida de calcular, o que reduz o tempo de execução",
+         "Que ela nunca superestima o custo real até o objetivo — condição que garante que o A* encontre o caminho ótimo",
+         "Que ela sempre retorna o valor exato da distância até o objetivo",
+         "Que ela pode ser aplicada tanto em grafos quanto em grades"],
+   ok:1,
+   why:"Admissível = otimista, nunca chuta a mais. A Manhattan é admissível num grid com movimentos só em 4 direções e custo 1, porque nesse cenário ela é exatamente o número mínimo de movimentos ignorando paredes. <span class='ref'>Se h superestimar, o A* pode devolver um caminho pior que o ótimo.</span>"},
+
+  /* ============ PARTE III — CÓDIGO ============ */
+  {parte:"Parte III — Código", sub:"Leitura de código Python, no estilo dos exemplos da disciplina.", novaParte:true,
+   tipo:"mc",
+   stem:"Considere um BFS implementado com <code>fila = deque([INICIO])</code> e <code>atual = fila.popleft()</code>. Qual alteração mínima o transforma em DFS?",
+   opts:["Trocar <code>deque</code> por <code>list</code>",
+         "Trocar <code>fila.popleft()</code> por <code>fila.pop()</code>",
+         "Trocar <code>fila.append(v)</code> por <code>fila.appendleft(v)</code>",
+         "Adicionar uma heurística ao critério de remoção"],
+   ok:1,
+   why:"<code>popleft()</code> remove do início (FIFO, fila) e <code>pop()</code> remove do fim (LIFO, pilha). <strong>Os cinco algoritmos da matéria são o mesmo laço</strong> — o que muda é como você tira o elemento da fronteira: <code>popleft</code>, <code>pop</code>, ou a chave da fila de prioridade (<code>g</code>, <code>h</code>, <code>g+h</code>)."},
+
+  {tipo:"mc",
+   stem:"O que esta função retorna?<div class='graph'><b>def</b> reconstruir(pais, estado):<br>&nbsp;&nbsp;&nbsp;&nbsp;caminho = [estado]<br>&nbsp;&nbsp;&nbsp;&nbsp;<b>while</b> pais[estado] <b>is not</b> None:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;estado = pais[estado]<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caminho.append(estado)<br>&nbsp;&nbsp;&nbsp;&nbsp;caminho.reverse()<br>&nbsp;&nbsp;&nbsp;&nbsp;<b>return</b> caminho</div>",
+   opts:["A lista de todos os estados visitados durante a busca",
+         "O caminho do estado inicial até o estado informado, na ordem correta",
+         "O custo total do caminho encontrado",
+         "A fronteira no momento em que o objetivo foi encontrado"],
+   ok:1,
+   why:"Ela sobe pela tabela de pais a partir do objetivo, acumulando <code>(4,6), (4,5), (4,4) …</code> até encontrar o estado cujo pai é <code>None</code> (o inicial), e o <code>reverse()</code> inverte para a ordem de leitura. <span class='ref'>Visitados e caminho são coisas diferentes — o caminho é um subconjunto dos visitados.</span>"},
+
+  {tipo:"mc",
+   stem:"No agente em Python visto na disciplina, o histórico é guardado assim: <code>historicos = {}</code>, indexado por <code>chat_id</code>. Qual afirmação está correta?",
+   opts:["É uma memória de longo prazo, pois persiste entre execuções",
+         "É uma memória de curto prazo em RAM, que se perde quando o programa é reiniciado",
+         "É a base de conhecimento usada para treinar o modelo",
+         "É o mecanismo que permite ao agente chamar ferramentas externas"],
+   ok:1,
+   why:"Dicionário em memória = <strong>curto prazo</strong>, some ao reiniciar. O exercício proposto no próprio repositório é justamente salvar isso em JSON para virar memória persistente. <span class='ref'>E nada ali treina o modelo: o histórico só é reenviado como contexto a cada chamada.</span>"},
+
+  {tipo:"mc",
+   stem:"Por que, no agente da disciplina, a chave de API fica em uma variável de ambiente (<code>os.environ[...]</code>) em vez de escrita no código?",
+   opts:["Porque variáveis de ambiente deixam o programa mais rápido",
+         "Porque o Python não aceita strings longas como chave",
+         "Para que a chave não vá parar no repositório — só o <code>.env.example</code> é versionado, nunca o <code>.env</code> real",
+         "Porque a API exige que a chave venha do sistema operacional"],
+   ok:2,
+   why:"É boa prática de segurança: credencial no código vaza junto com o código. O repositório traz um <code>.env.example</code> com campos em branco, e o <code>.env</code> real fica fora do controle de versão."},
+
+  /* ============ PARTE IV — AGENTES ============ */
+  {parte:"Parte IV — Agentes", sub:"Aula 04 e a prática da aula 05.", novaParte:true,
+   tipo:"mc",
+   stem:"No framework <strong>PEAS</strong>, aplicado a um carro autônomo, o que corresponde a cada letra?",
+   opts:["Planejamento, Execução, Ambiente, Sensores",
+         "Performance (segurança, rapidez, conforto), Environment (ruas, trânsito, pedestres), Actuators (volante, freio, acelerador), Sensors (câmeras, GPS, radar)",
+         "Percepção, Estado, Ação, Situação",
+         "Programa, Entrada, Algoritmo, Saída"],
+   ok:1,
+   why:"PEAS serve para <strong>especificar o ambiente de tarefa</strong> de um agente antes de projetá-lo. Se a prova pedir PEAS para outro agente (aspirador, agente de jogo), a lógica é a mesma: critério de sucesso, mundo, o que age, o que percebe."},
+
+  {tipo:"mc",
+   stem:"Um termostato que liga o aquecedor sempre que a temperatura fica abaixo de 20°, sem considerar qualquer histórico, é um exemplo de qual tipo de agente?",
+   opts:["Agente reativo simples",
+         "Agente reativo baseado em modelo interno",
+         "Agente baseado em objetivos",
+         "Agente baseado em utilidade"],
+   ok:0,
+   why:"Reativo simples: age só pela <strong>percepção atual</strong>, com regras se…então, ignorando o histórico. É o degrau mais baixo da taxonomia."},
+
+  {tipo:"mc",
+   stem:"Um robô aspirador precisa limpar, mas também terminar rápido e gastar o mínimo de energia; entre os caminhos A (10 min), B (15 min) e C (12 min, com um tapete), ele pondera e escolhe. Que tipo de agente é esse?",
+   opts:["Reativo simples","Reativo baseado em modelo","Baseado em objetivos","Baseado em utilidade"],
+   ok:3,
+   why:"Quando há <strong>múltiplos objetivos</strong> ou incerteza, o agente maximiza uma função de <strong>utilidade</strong> em vez de apenas atingir uma meta. Um agente baseado em objetivos se contentaria em limpar — sem se importar com quanto custou."},
+
+  {tipo:"mc",
+   stem:"Um carro autônomo entra em um túnel, perde o sinal de GPS e continua estimando a própria posição pelo último estado conhecido e pelo histórico de movimentos. Isso caracteriza:",
+   opts:["Agente reativo simples",
+         "Agente reativo baseado em modelo interno",
+         "Agente de aprendizado",
+         "Sistema multiagente"],
+   ok:1,
+   why:"O <strong>modelo interno</strong> existe justamente para lidar com as partes <em>não observáveis</em> do ambiente: o agente usa o histórico de percepções e o estado interno para decidir quando os sensores não bastam."},
+
+  {tipo:"mc",
+   stem:"Quais são os três pilares do <strong>MCP (Model Context Protocol)</strong>?",
+   opts:["Modelos, Contextos e Protocolos",
+         "Resources (dados de leitura), Tools (funções executáveis) e Prompts (templates do servidor)",
+         "Sensores, Atuadores e Função do agente",
+         "Percepção, Memória e Planejamento"],
+   ok:1,
+   why:"Protocolo aberto criado pela Anthropic. O ganho é o <strong>desacoplamento</strong>: um servidor MCP é escrito uma vez e qualquer agente compatível se conecta a ele — sai do N×M conectores customizados para N+M."},
+
+  /* ============ PARTE V — FUNDAMENTOS E RISCOS ============ */
+  {parte:"Parte V — Fundamentos e riscos", sub:"Aulas 01, 02 e 03.", novaParte:true,
+   tipo:"mc",
+   stem:"Relacione corretamente os marcos históricos:",
+   opts:["Teste de Turing (1956) · Conferência de Dartmouth (1950) · Transformers (2012)",
+         "Teste de Turing (1950) · Conferência de Dartmouth (1956) · Transformers (2017)",
+         "Teste de Turing (1950) · Conferência de Dartmouth (1956) · Transformers (2020)",
+         "Teste de Turing (1943) · Conferência de Dartmouth (1956) · Transformers (2017)"],
+   ok:1,
+   why:"1950: Turing publica “Computing Machinery and Intelligence”. 1956: Dartmouth, onde <strong>nasce o termo</strong> Inteligência Artificial (McCarthy). 2017: “Attention Is All You Need”, que origina GPT, Gemini, Claude. <span class='ref'>2012 é a AlexNet; 2020 é o GPT-3.</span>"},
+
+  {tipo:"mc",
+   stem:"Sobre IA simbólica e IA baseada em dados, assinale a alternativa correta:",
+   opts:["A simbólica é uma caixa-preta, e a baseada em dados é facilmente explicável",
+         "A simbólica é explicável mas difícil de escalar; a baseada em dados generaliza bem mas é caixa-preta",
+         "Ambas aprendem padrões a partir de grandes volumes de dados",
+         "A baseada em dados predominou nos anos 70 e 80, e a simbólica predomina hoje"],
+   ok:1,
+   why:"A simbólica depende de regras codificadas manualmente por especialistas — por isso é auditável, mas não escala. A baseada em dados aprende sozinha e lida com imagem e linguagem, ao custo da opacidade. <strong>A tendência atual são os híbridos neurossimbólicos</strong>, que juntam as duas vantagens."},
+
+  {tipo:"mc",
+   stem:"Se tanto um sistema bancário tradicional quanto uma IA simbólica funcionam por regras, o que de fato os distingue?",
+   opts:["A IA simbólica usa redes neurais por baixo das regras",
+         "O sistema tradicional automatiza processos (regras de negócio); a IA simbólica automatiza raciocínio (regras de conhecimento)",
+         "O sistema tradicional é mais lento que a IA simbólica",
+         "Não há distinção real: são o mesmo tipo de sistema"],
+   ok:1,
+   why:"“Emitir boleto” e “calcular imposto” são <strong>processos</strong>. “Diagnosticar pneumonia” e “escolher a melhor ação” são <strong>raciocínio</strong>. O exemplo da aula: <code>SE febre E tosse E raio-X com infiltrado ENTÃO suspeita = pneumonia</code>."},
+
+  {tipo:"mc",
+   stem:"Um modelo de linguagem afirma com total confiança que “o inventor brasileiro da internet foi José Almeida, que desenvolveu o primeiro protocolo em 1988”. Qual explicação está correta?",
+   opts:["O modelo consultou sua base de dados e encontrou um registro incorreto",
+         "O modelo foi treinado com dados falsos sobre esse assunto específico",
+         "Faltando informação, a distribuição de probabilidade fica achatada; o modelo escolhe uma palavra qualquer e então precisa manter a coerência da escolha errada",
+         "O modelo está deliberadamente mentindo para não admitir que não sabe"],
+   ok:2,
+   why:"É a <strong>alucinação</strong> com efeito bola de neve. O modelo não consulta banco de dados: ele prevê a palavra mais provável dado o contexto. Com “o céu sem nuvens é…”, <em>azul</em> tem 95%. Sem informação, nenhuma opção domina, ele escolhe uma e o resto do texto é construído para justificá-la. <span class='ref'>Por isso o resultado é plausível e falso ao mesmo tempo — e por isso a IA “não está mentindo”.</span>"},
+
+  {tipo:"mc",
+   stem:"O que é <strong>RAG</strong> e qual problema ele ajuda a resolver?",
+   opts:["Uma técnica de treinamento que aumenta o número de parâmetros do modelo",
+         "Retrieval-Augmented Generation: o modelo consulta documentos externos antes de responder, reduzindo alucinações em perguntas factuais",
+         "Um método de compressão que reduz o custo computacional da inferência",
+         "O processo de alinhamento com feedback humano após o treinamento"],
+   ok:1,
+   why:"Em vez de responder só com os pesos, a IA busca a fonte e responde com base nela — o exemplo da aula é consultar a legislação para citar o artigo 121 do Código Penal. <span class='ref'>A alternativa sobre “alinhamento com feedback humano” descreve o RLHF, que é outra técnica de redução de alucinação — não confunda as duas.</span>"},
+
+  {tipo:"mc",
+   stem:"Um sistema hospitalar interpreta exames, gera relatórios, tira dúvidas sobre medicamentos e agenda consultas — tudo dentro da área da saúde. Como ele se classifica?",
+   opts:["IA fraca, pois executa tarefas específicas",
+         "IA ampla: várias tarefas, mas dentro de um conjunto restrito de domínios",
+         "IA forte, pois transfere conhecimento entre áreas",
+         "Não é IA, pois apenas segue regras"],
+   ok:1,
+   why:"É o <strong>canivete suíço</strong> da aula: faz muita coisa, mas tudo dentro de um kit limitado. Mais flexível que a IA fraca (que faz uma tarefa só), sem a adaptabilidade da IA forte (que atuaria em qualquer domínio e transferiria conhecimento entre eles)."},
+
+  /* ============ DISCURSIVAS ============ */
+  {parte:"Discursivas", sub:"Não entram no placar. Escreva ou formule mentalmente sua resposta antes de abrir o roteiro.", novaParte:true,
+   tipo:"disc",
+   stem:"Explique a diferença entre a <strong>busca gulosa</strong> e o <strong>A*</strong>, indicando a função de avaliação de cada uma e por que apenas uma delas garante o caminho ótimo.",
+   modelo:"<p>O professor espera ver, no mínimo:</p><ul>" +
+     "<li>Gulosa usa <code>f(n) = h(n)</code>: escolhe sempre o nó que <em>parece</em> mais próximo do objetivo.</li>" +
+     "<li>A* usa <code>f(n) = g(n) + h(n)</code>: soma o custo real já percorrido com a estimativa do que falta.</li>" +
+     "<li>A gulosa <strong>ignora o custo já gasto</strong>, então pode seguir por um caminho que aponta para o objetivo e sair muito mais caro — não é ótima nem sempre completa.</li>" +
+     "<li>O A* é <strong>ótimo desde que h seja admissível</strong> (nunca superestime o custo real).</li>" +
+     "<li>Diferencial prático: o A* mantém tabela de custos e pais que <strong>pode ser atualizada</strong> se descobrir um caminho melhor; a gulosa não revisa nada.</li>" +
+     "<li>Fechamento que vale ponto: com <code>h = 0</code> o A* vira Dijkstra; ignorando <code>g</code>, vira gulosa.</li></ul>"},
+
+  {tipo:"disc",
+   stem:"Descreva o ciclo de funcionamento de um <strong>agente inteligente</strong>, citando seus componentes, e classifique-o quanto aos tipos vistos em aula.",
+   modelo:"<p>Roteiro da resposta:</p><ul>" +
+     "<li>Estrutura: <strong>sensores → função do agente (o “cérebro”) → atuadores</strong>.</li>" +
+     "<li>Ciclo: o agente <strong>percebe</strong> o ambiente pelos sensores, a função do agente <strong>processa e decide</strong>, os atuadores <strong>agem</strong> e modificam o ambiente — que é percebido de novo, reiniciando o ciclo. <em>Perceber → pensar → agir → (aprender)</em>.</li>" +
+     "<li>Características: autonomia, percepção, raciocínio/decisão e aprendizado.</li>" +
+     "<li>Os cinco tipos: reativo simples; reativo com modelo interno; baseado em objetivos; baseado em utilidade; de aprendizado.</li>" +
+     "<li>Princípio da racionalidade: o agente racional faz a melhor coisa possível <strong>com base no que sabe</strong>, não na verdade absoluta do ambiente.</li>" +
+     "<li>Se der, cite PEAS como forma de especificar o ambiente de tarefa.</li></ul>"},
+
+  {tipo:"disc",
+   stem:"Um modelo de IA usado em um processo seletivo passa a rejeitar sistematicamente candidatas mulheres. Explique <strong>por que isso acontece</strong> e discuta <strong>de quem é a responsabilidade</strong>.",
+   modelo:"<p>Pontos esperados:</p><ul>" +
+     "<li>A IA aprende com os dados que recebe; se os dados históricos de contratação favoreciam um perfil, esse padrão vira base de aprendizado — é o <strong>viés algorítmico</strong>.</li>" +
+     "<li>A frase da aula: <strong>“a IA não nasce preconceituosa, ela apenas aprende padrões que os dados já trazem”</strong>.</li>" +
+     "<li>É o caso da tabela vista em sala, em que todos os contratados eram homens de faculdade federal.</li>" +
+     "<li>Áreas críticas onde o viés causa dano: saúde, bancos, escola, seleção de empregos.</li>" +
+     "<li>Responsabilidade: não existe regra fechada e os tribunais avaliam caso a caso — mas o princípio da aula é que <strong>quem responde pela resposta da IA é o humano que a usou</strong>, somado a quem escolheu os dados e implantou o sistema.</li>" +
+     "<li>Mitigação: curadoria dos dados, auditoria do modelo, validação humana das decisões.</li></ul>"},
+
+  {tipo:"disc",
+   stem:"Dado o labirinto abaixo, com S = (0,0) e G = (4,6), explique <strong>como a BFS encontra a solução</strong> e por que o caminho obtido é o de menor número de passos. Indique a estrutura usada e como o caminho é recuperado ao final.",
+   extra:mazeHTML("Ordem de vizinhos: cima → direita → baixo → esquerda"),
+   modelo:"<p>Resposta esperada:</p><ul>" +
+     "<li>Estrutura: <strong>fila (FIFO)</strong>. Começa com S na fila e o conjunto de visitados contendo S.</li>" +
+     "<li>Laço: retira o primeiro da fila, testa se é o objetivo, examina os vizinhos na ordem cima → direita → baixo → esquerda, e adiciona ao <strong>final</strong> da fila os que forem livres e ainda não visitados — marcando-os como visitados já na inserção.</li>" +
+     "<li>Como só se avança de nível depois de esgotar o anterior, o objetivo é tocado pela primeira vez pelo caminho de menor número de passos. Vale a ressalva: ótimo <strong>em grafo não ponderado</strong>.</li>" +
+     "<li>Recuperação: pela <strong>tabela de pais</strong> — de (4,6) volta-se até (0,0) e inverte-se a lista.</li>" +
+     "<li>Resultado: <code>(0,0) → (0,1) → (0,2) → (1,2) → (2,2) → (2,3) → (2,4) → (3,4) → (4,4) → (4,5) → (4,6)</code> — 11 estados, <strong>10 movimentos</strong>.</li></ul>"}
+  ];
+
+  /* ---------- renderização ---------- */
+  var quiz = document.getElementById("quiz");
+  var LETRAS = ["A","B","C","D","E"];
+  var totalMC = 0;
+  for (var t=0;t<Q.length;t++) if (Q[t].tipo === "mc") totalMC++;
+
+  var respondidas = 0, certas = 0;
+  var erros = [];
+
+  function render(){
+    quiz.innerHTML = "";
+    respondidas = 0; certas = 0; erros = [];
+    document.getElementById("result").classList.remove("on");
+
+    var numMC = 0;
+    for (var i=0;i<Q.length;i++){
+      var q = Q[i];
+
+      if (q.novaParte){
+        var p = document.createElement("p");
+        p.className = "parte";
+        p.textContent = q.parte;
+        quiz.appendChild(p);
+        var h = document.createElement("h2");
+        h.textContent = q.parte.replace(/^Parte [IV]+ — /, "");
+        quiz.appendChild(h);
+        var sb = document.createElement("p");
+        sb.className = "parte-sub";
+        sb.textContent = q.sub;
+        quiz.appendChild(sb);
+      }
+
+      var card = document.createElement("div");
+      card.className = "q";
+
+      var label;
+      if (q.tipo === "mc"){ numMC++; label = 'Questão ' + numMC + ' <span class="kind">· múltipla escolha</span>'; }
+      else { label = '<span class="kind">Discursiva</span>'; }
+
+      var html = '<span class="q-num">' + label + '</span>';
+      html += (q.extra || "");
+      html += '<p class="stem">' + q.stem + '</p>';
+
+      if (q.tipo === "mc"){
+        /* embaralha a ordem de exibição para a resposta certa não cair
+           sempre na mesma letra -- data-i guarda o índice original */
+        var ordem = [];
+        for (var z=0;z<q.opts.length;z++) ordem.push(z);
+        if (!q.fixa) embaralhar(ordem);
+
+        html += '<div class="opts">';
+        for (var o=0;o<ordem.length;o++){
+          html += '<button type="button" class="opt" data-i="' + ordem[o] + '">' +
+                  '<span class="letra">' + LETRAS[o] + '</span><span>' + q.opts[ordem[o]] + '</span></button>';
+        }
+        html += '</div><div class="why"><span class="verdict"></span><div class="txt"></div></div>';
+      } else {
+        html += '<button type="button" class="disc-btn">Ver o roteiro da resposta esperada →</button>' +
+                '<div class="modelo"><span class="verdict">Roteiro esperado</span>' + q.modelo + '</div>';
+      }
+
+      card.innerHTML = html;
+      quiz.appendChild(card);
+
+      if (q.tipo === "mc") bindMC(card, q, numMC);
+      else bindDisc(card);
+    }
+    updateTally();
+  }
+
+  function embaralhar(a){
+    for (var i=a.length-1;i>0;i--){
+      var j = Math.floor(Math.random() * (i+1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function bindMC(card, q, numero){
+    var botoes = card.querySelectorAll(".opt");
+    var why = card.querySelector(".why");
+
+    /* posição EXIBIDA da alternativa correta, já considerando o embaralhamento */
+    var posCerta = 0;
+    for (var p=0;p<botoes.length;p++){
+      if (parseInt(botoes[p].getAttribute("data-i"), 10) === q.ok) posCerta = p;
+    }
+
+    for (var b=0;b<botoes.length;b++){
+      botoes[b].addEventListener("click", function(){
+        if (card.classList.contains("resolvida")) return;
+        var escolhida = parseInt(this.getAttribute("data-i"), 10);
+        var acertou = (escolhida === q.ok);
+
+        card.classList.add("resolvida");
+        for (var j=0;j<botoes.length;j++){
+          botoes[j].disabled = true;
+          if (parseInt(botoes[j].getAttribute("data-i"), 10) === q.ok) botoes[j].classList.add("certa");
+        }
+        if (!acertou) this.classList.add("errada");
+
+        why.className = "why " + (acertou ? "ok" : "no");
+        why.querySelector(".verdict").textContent =
+          acertou ? "✓ Correto" : "✕ Resposta correta: " + LETRAS[posCerta];
+        why.querySelector(".txt").innerHTML = q.why;
+
+        respondidas++;
+        if (acertou) certas++;
+        else erros.push({n:numero, tema:temaDe(q)});
+        updateTally();
+      });
+    }
+  }
+
+  function bindDisc(card){
+    card.querySelector(".disc-btn").addEventListener("click", function(){
+      card.classList.add("aberta");
+    });
+  }
+
+  function temaDe(q){
+    var p = q.parteAtual || "";
+    return p;
+  }
+
+  /* marca a parte de cada questão para o relatório final */
+  (function marcar(){
+    var atual = "";
+    for (var i=0;i<Q.length;i++){
+      if (Q[i].novaParte) atual = Q[i].parte;
+      Q[i].parteAtual = atual;
+    }
+  })();
+
+  function updateTally(){
+    var erradas = respondidas - certas;
+    document.getElementById("tally").innerHTML =
+      "respondidas <b>" + respondidas + "</b>/" + totalMC +
+      ' · <span class="hit">' + certas + " certas</span>" +
+      ' · <span class="miss">' + erradas + " erradas</span>";
+    document.getElementById("bar").style.width = (respondidas / totalMC * 100) + "%";
+
+    if (respondidas === totalMC) mostrarResultado();
+  }
+
+  function mostrarResultado(){
+    var pct = Math.round(certas / totalMC * 100);
+    var res = document.getElementById("result");
+    document.getElementById("pct").textContent = certas + "/" + totalMC + "  ·  " + pct + "%";
+
+    var msg;
+    if (pct >= 90)      msg = "Você está pronto. Se sobrar tempo, reveja só as discursivas.";
+    else if (pct >= 75) msg = "Base sólida. Foque nos temas abaixo antes de dormir.";
+    else if (pct >= 60) msg = "Dá para chegar lá. Releia as seções dos erros e refaça o simulado.";
+    else                msg = "Volte ao guia antes de refazer — comece pela parte de busca, que é a que mais pesa.";
+    document.getElementById("verdito").textContent = msg;
+
+    var porTema = {};
+    for (var e=0;e<erros.length;e++){
+      var t = erros[e].tema || "Geral";
+      if (!porTema[t]) porTema[t] = [];
+      porTema[t].push(erros[e].n);
+    }
+    var ul = document.getElementById("weak");
+    ul.innerHTML = "";
+    var vazio = true;
+    for (var tema in porTema){
+      vazio = false;
+      var li = document.createElement("li");
+      li.innerHTML = '<span>Q' + porTema[tema].join(", Q") + '</span><span>' + tema + '</span>';
+      ul.appendChild(li);
+    }
+    if (vazio){
+      var li2 = document.createElement("li");
+      li2.innerHTML = '<span>—</span><span>Nenhum erro. Placar limpo.</span>';
+      ul.appendChild(li2);
+    }
+
+    res.classList.add("on");
+    res.scrollIntoView({behavior:"smooth", block:"start"});
+  }
+
+  document.getElementById("again").addEventListener("click", function(){
+    render();
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+  document.getElementById("top").addEventListener("click", function(){
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+
+  render();
+})();
+</script>
+<script src="theme.js" defer></script>
+</body>
+</html>

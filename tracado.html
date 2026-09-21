@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Sete exercicios de tracado passo a passo de BFS, DFS, Dijkstra, busca gulosa e A*.">
+  <title>Bateria de traçado — algoritmos de busca</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E✍️%3C/text%3E%3C/svg%3E">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;}
+    html{-webkit-text-size-adjust:100%;}
+    body{margin:0;}
+    img,svg,video{max-width:100%;height:auto;}
+    button,input,select,textarea{font:inherit;color:inherit;}
+    table{border-collapse:collapse;}
+  </style>
+</head>
+<body>
+<style>
+:root{
+  --paper:#EFEDF2; --surface:#FBFAFD; --surface-2:#E7E4EE;
+  --ink:#1B1622; --ink-soft:#5D5670; --line:#D6D1E0; --grid:#DFDAE8;
+  --accent:#8A2D6E; --accent-soft:#F4DCEE; --accent-ink:#FFFFFF;
+  --amber:#A65A0B; --amber-soft:#F7E6D2;
+  --ok:#1B6B49; --ok-soft:#DCEFE4; --bad:#A32741; --bad-soft:#F7DDE3;
+  --wall:#2A2333;
+  --shadow:0 1px 2px rgba(27,22,34,.06), 0 8px 24px -12px rgba(27,22,34,.18);
+  --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Menlo,Consolas,monospace;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --display:Georgia,"Iowan Old Style","Palatino Linotype","Times New Roman",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#141119; --surface:#1D1926; --surface-2:#272232;
+    --ink:#EDE9F4; --ink-soft:#ABA2BE; --line:#332C41; --grid:#221D2C;
+    --accent:#E98FCE; --accent-soft:#3F1B37; --accent-ink:#1B1622;
+    --amber:#E7A45C; --amber-soft:#3A2A18;
+    --ok:#5FD3A0; --ok-soft:#173327; --bad:#F2879E; --bad-soft:#3A1822;
+    --wall:#0B0910;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141119; --surface:#1D1926; --surface-2:#272232;
+  --ink:#EDE9F4; --ink-soft:#ABA2BE; --line:#332C41; --grid:#221D2C;
+  --accent:#E98FCE; --accent-soft:#3F1B37; --accent-ink:#1B1622;
+  --amber:#E7A45C; --amber-soft:#3A2A18;
+  --ok:#5FD3A0; --ok-soft:#173327; --bad:#F2879E; --bad-soft:#3A1822;
+  --wall:#0B0910;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+:root[data-theme="light"]{
+  --paper:#EFEDF2; --surface:#FBFAFD; --surface-2:#E7E4EE;
+  --ink:#1B1622; --ink-soft:#5D5670; --line:#D6D1E0; --grid:#DFDAE8;
+  --accent:#8A2D6E; --accent-soft:#F4DCEE; --accent-ink:#FFFFFF;
+  --amber:#A65A0B; --amber-soft:#F7E6D2;
+  --ok:#1B6B49; --ok-soft:#DCEFE4; --bad:#A32741; --bad-soft:#F7DDE3;
+  --wall:#2A2333;
+  --shadow:0 1px 2px rgba(27,22,34,.06), 0 8px 24px -12px rgba(27,22,34,.18);
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--body); font-size:16.5px; line-height:1.6;
+  background-image:
+    repeating-linear-gradient(to right, var(--grid) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(to bottom, var(--grid) 0 1px, transparent 1px 28px);
+  -webkit-font-smoothing:antialiased;
+}
+.page{max-width:860px; margin:0 auto; padding:0 20px 90px;}
+
+.masthead{padding:52px 0 24px; border-bottom:2px solid var(--ink); margin-bottom:8px;}
+.eyebrow{font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-soft); margin:0 0 12px;}
+h1{font-family:var(--display); font-weight:700; font-size:clamp(2rem,5vw,3rem);
+  line-height:1.05; letter-spacing:-.02em; margin:0 0 14px; text-wrap:balance;}
+h1 em{font-style:italic; color:var(--accent);}
+.lede{font-size:1.05rem; color:var(--ink-soft); margin:0 0 16px; max-width:62ch;}
+
+.howto{background:var(--surface); border:1px solid var(--line); border-radius:3px;
+  padding:14px 17px; font-size:.9rem; box-shadow:var(--shadow);}
+.howto b{display:block; font-family:var(--mono); font-size:.68rem; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--accent); margin-bottom:7px;}
+.howto p{margin:0 0 7px;} .howto p:last-child{margin:0;}
+.howto code{font-family:var(--mono); font-size:.86em; background:var(--surface-2); padding:.1em .34em; border-radius:2px;}
+
+.scorebar{position:sticky; top:0; z-index:20; background:var(--paper);
+  border-bottom:1px solid var(--line); padding:11px 0 10px; margin:26px 0 34px;
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
+.track{flex:1; min-width:140px; height:5px; background:var(--surface-2); border-radius:3px; overflow:hidden;}
+.track span{display:block; height:100%; width:0; background:var(--accent); transition:width .3s;}
+@media (prefers-reduced-motion:reduce){ .track span{transition:none;} }
+.tally{font-family:var(--mono); font-size:.78rem; letter-spacing:.05em; color:var(--ink-soft);
+  font-variant-numeric:tabular-nums; white-space:nowrap;}
+.tally b{color:var(--ink);}
+
+/* ---- exercício ---- */
+.ex{background:var(--surface); border:1px solid var(--line); border-radius:4px;
+  padding:22px 24px; margin-bottom:22px; box-shadow:var(--shadow);}
+.ex-num{font-family:var(--mono); font-size:.7rem; letter-spacing:.11em; text-transform:uppercase;
+  color:var(--accent); display:block; margin-bottom:7px;}
+.ex h2{font-family:var(--display); font-size:1.32rem; letter-spacing:-.012em; margin:0 0 8px;}
+.ex .intro{margin:0 0 16px; font-size:.96rem; color:var(--ink-soft);}
+.ex .intro strong{color:var(--ink); font-weight:620;}
+.ex .intro code, .cell-static code{font-family:var(--mono); font-size:.87em;
+  background:var(--surface-2); padding:.1em .34em; border-radius:2px;}
+
+.fig{display:flex; flex-wrap:wrap; gap:22px; align-items:flex-start; margin:0 0 18px;}
+.fig svg{max-width:100%; height:auto;}
+.figcap{font-family:var(--mono); font-size:.7rem; color:var(--ink-soft); margin:8px 0 0; line-height:1.6;}
+
+.mini{display:grid; grid-template-columns:repeat(7,27px); gap:2px;}
+.mini i{width:27px; height:27px; border-radius:2px; background:var(--surface-2); border:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:.68rem; font-style:normal; font-weight:700; color:var(--ink-soft);}
+.mini i.w{background:var(--wall); border-color:var(--wall);}
+.mini i.s, .mini i.g{border-color:var(--accent); color:var(--accent);}
+
+/* grafos */
+.node{fill:var(--surface); stroke:var(--ink); stroke-width:1.6;}
+.node-inicio{stroke:var(--accent); stroke-width:2.6;}
+.node-obj{stroke:var(--ok); stroke-width:2.6;}
+.nlabel{font-family:var(--mono); font-size:13px; font-weight:700; fill:var(--ink);
+  text-anchor:middle; dominant-baseline:central;}
+.edge{stroke:var(--ink-soft); stroke-width:1.5; fill:none;}
+.wlabel{font-family:var(--mono); font-size:11px; fill:var(--accent); font-weight:700;
+  text-anchor:middle; paint-order:stroke; stroke:var(--surface); stroke-width:4px;}
+.hlabel{font-family:var(--mono); font-size:10.5px; fill:var(--ink-soft); text-anchor:middle;}
+
+/* tabela */
+.tw{overflow-x:auto; margin:0 0 15px; border:1px solid var(--line); border-radius:3px;}
+table{border-collapse:collapse; width:100%; font-size:.9rem; min-width:460px; background:var(--surface);}
+th,td{text-align:left; padding:7px 11px; border-bottom:1px solid var(--line); vertical-align:middle;}
+thead th{font-family:var(--mono); font-size:.66rem; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--ink-soft); background:var(--surface-2); white-space:nowrap;}
+tbody tr:last-child td{border-bottom:0;}
+.cell-static{font-family:var(--mono); font-variant-numeric:tabular-nums; color:var(--ink-soft); white-space:nowrap;}
+.cell-static.destaque{color:var(--ink); font-weight:600;}
+
+input.campo{
+  font-family:var(--mono); font-size:.86rem; width:100%; min-width:70px;
+  background:var(--paper); color:var(--ink); border:1px solid var(--line); border-radius:2px;
+  padding:6px 8px; transition:border-color .15s, background .15s;
+}
+input.campo::placeholder{color:var(--ink-soft); opacity:.55;}
+input.campo:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent);}
+input.campo.ok{background:var(--ok-soft); border-color:var(--ok); color:var(--ink);}
+input.campo.no{background:var(--bad-soft); border-color:var(--bad); color:var(--ink);}
+input.campo.revelado{background:var(--accent-soft); border-color:var(--accent);}
+input.campo:disabled{opacity:1;}
+td.wide{min-width:210px;}
+
+.acoes{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+.btn{background:var(--ink); color:var(--paper); border:1px solid var(--ink); border-radius:2px;
+  padding:8px 16px; font-family:inherit; font-size:.87rem; font-weight:550; cursor:pointer;}
+.btn.ghost{background:transparent; color:var(--ink-soft); border-color:var(--line);}
+.btn.ghost:hover{color:var(--accent); border-color:var(--accent);}
+.btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.placar{font-family:var(--mono); font-size:.78rem; color:var(--ink-soft); margin-left:auto;
+  font-variant-numeric:tabular-nums;}
+.placar.tudo{color:var(--ok); font-weight:700;}
+
+.dica{margin:14px 0 0; padding:13px 15px; background:var(--surface-2); border:1px solid var(--line);
+  border-radius:3px; font-size:.9rem; display:none;}
+.ex.mostrando .dica{display:block;}
+.dica b{font-family:var(--mono); font-size:.66rem; letter-spacing:.11em; text-transform:uppercase;
+  color:var(--accent); display:block; margin-bottom:6px;}
+.dica p{margin:0 0 8px;} .dica p:last-child{margin:0;}
+
+footer{margin-top:50px; padding-top:20px; border-top:1px solid var(--line); font-size:.85rem; color:var(--ink-soft);}
+</style>
+
+<div class="page">
+
+<header class="masthead">
+  <p class="eyebrow">Bateria de traçado · Inteligência Artificial</p>
+  <h1>Preencha a tabela, <em>iteração por iteração</em>.</h1>
+  <p class="lede">Sete exercícios no formato da questão longa: você executa o algoritmo à mão e o gabarito confere campo a campo. Todos os traços foram gerados rodando os algoritmos de verdade — se o seu bater, está certo mesmo.</p>
+
+  <div class="howto">
+    <b>Como escrever as respostas</b>
+    <p><strong>Coordenadas:</strong> a ordem importa dentro da fila e da pilha. Escreva como preferir — <code>(2,3) (2,1)</code>, <code>2,3 2,1</code> ou <code>(2,3),(2,1)</code> são equivalentes.</p>
+    <p><strong>Fila ou pilha vazia:</strong> deixe em branco ou escreva <code>vazia</code>.</p>
+    <p><strong>Nós de grafo:</strong> apenas as letras, na ordem — <code>ABCDE</code> ou <code>A B C D E</code>.</p>
+  </div>
+</header>
+
+<div class="scorebar">
+  <div class="track"><span id="bar"></span></div>
+  <div class="tally" id="tally">campos corretos <b>0</b>/0</div>
+</div>
+
+<main id="app"></main>
+
+<footer>
+  <p>Os exercícios 1 e 2 usam o labirinto da aula 07 e o exercício 5 usa o grafo A–E da aula 08. Os grafos dos exercícios 3, 6 e 7 foram montados no mesmo estilo, com valores próprios, para você treinar sem decorar o resultado.</p>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ========== figuras ========== */
+  var MAZE = ["S..#...","##.#.#.",".....#.",".###.#.","......G"];
+
+  function mazeFig(cap){
+    var h = '<div><div class="mini">';
+    for (var r=0;r<MAZE.length;r++){
+      for (var c=0;c<MAZE[r].length;c++){
+        var ch = MAZE[r][c];
+        var cls = ch === "#" ? "w" : (ch === "S" ? "s" : (ch === "G" ? "g" : ""));
+        h += '<i class="' + cls + '">' + (ch === "#" || ch === "." ? "" : ch) + '</i>';
+      }
+    }
+    return h + '</div><p class="figcap">' + cap + '</p></div>';
+  }
+
+  function no(x,y,rot,cls){
+    return '<circle class="node ' + (cls||"") + '" cx="' + x + '" cy="' + y + '" r="16"/>' +
+           '<text class="nlabel" x="' + x + '" y="' + y + '">' + rot + '</text>';
+  }
+  function aresta(x1,y1,x2,y2){
+    return '<line class="edge" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"/>';
+  }
+  function peso(x1,y1,x2,y2,w,dx,dy){
+    return '<text class="wlabel" x="' + ((x1+x2)/2 + (dx||0)) + '" y="' + ((y1+y2)/2 + (dy||0)) + '">' + w + '</text>';
+  }
+  function hl(x,y,t){ return '<text class="hlabel" x="' + x + '" y="' + y + '">' + t + '</text>'; }
+
+  /* grafo em árvore A..I (BFS x DFS) */
+  var GRAFO_AI = (function(){
+    var P = {A:[230,22], B:[130,80], C:[330,80], D:[60,138], E:[180,138],
+             F:[280,138], G:[400,138], H:[120,196], I:[340,196]};
+    var E = [["A","B"],["A","C"],["B","D"],["B","E"],["C","F"],["C","G"],
+             ["D","H"],["E","H"],["F","I"],["G","I"]];
+    var s = '<svg viewBox="0 0 460 222" width="440" role="img" aria-label="Grafo com raiz A, filhos B e C, netos D E F G e bisnetos H e I">';
+    for (var i=0;i<E.length;i++){
+      var a = P[E[i][0]], b = P[E[i][1]];
+      s += aresta(a[0],a[1],b[0],b[1]);
+    }
+    for (var k in P) s += no(P[k][0], P[k][1], k, k === "A" ? "node-inicio" : "");
+    return s + '</svg>';
+  })();
+
+  /* grafo ponderado A..E (Dijkstra, igual ao da aula) */
+  var GRAFO_AE = (function(){
+    var P = {A:[38,82], B:[152,26], C:[152,138], D:[272,82], E:[398,82]};
+    var E = [["A","B",5,-6,-6],["A","C",4,-8,10],["C","B",6,-14,0],["B","D",3,8,-8],
+             ["C","D",2,6,10],["C","E",4,-4,16],["D","E",5,0,-8]];
+    var s = '<svg viewBox="0 0 440 168" width="430" role="img" aria-label="Grafo ponderado de A até E">';
+    for (var i=0;i<E.length;i++){
+      var a = P[E[i][0]], b = P[E[i][1]];
+      s += aresta(a[0],a[1],b[0],b[1]);
+    }
+    for (var j=0;j<E.length;j++){
+      var c = P[E[j][0]], d = P[E[j][1]];
+      s += peso(c[0],c[1],d[0],d[1],E[j][2],E[j][3],E[j][4]);
+    }
+    for (var k in P) s += no(P[k][0], P[k][1], k, k === "A" ? "node-inicio" : "");
+    return s + '</svg>';
+  })();
+
+  /* grafo S..G com pesos e heurística (Dijkstra x A*) */
+  var GRAFO_SG = (function(showH){
+    var P = {S:[32,76], A:[132,30], B:[132,122], C:[242,46], D:[352,76], G:[452,76]};
+    var E = [["S","A",2,-4,-8],["S","B",3,-6,12],["A","C",5,0,-10],["B","C",1,-12,4],
+             ["B","D",6,0,16],["C","D",2,4,-8],["D","G",3,0,-8]];
+    var H = {S:7, A:8, B:4, C:4, D:3, G:0};
+    var off = {S:[0,26], A:[0,-24], B:[0,28], C:[0,-24], D:[0,26], G:[0,26]};
+    var s = '<svg viewBox="0 0 492 152" width="470" role="img" aria-label="Grafo ponderado de S até G com heurísticas">';
+    for (var i=0;i<E.length;i++){ var a=P[E[i][0]], b=P[E[i][1]]; s += aresta(a[0],a[1],b[0],b[1]); }
+    for (var j=0;j<E.length;j++){ var c=P[E[j][0]], d=P[E[j][1]]; s += peso(c[0],c[1],d[0],d[1],E[j][2],E[j][3],E[j][4]); }
+    for (var k in P){
+      s += no(P[k][0], P[k][1], k, k === "S" ? "node-inicio" : (k === "G" ? "node-obj" : ""));
+      if (showH) s += hl(P[k][0] + off[k][0], P[k][1] + off[k][1], "h=" + H[k]);
+    }
+    return s + '</svg>';
+  })(true);
+
+  /* grafo da busca gulosa, só com heurística */
+  var GRAFO_GUL = (function(){
+    var P = {A:[38,80], B:[150,26], C:[150,136], D:[282,136], E:[282,26], G:[404,80]};
+    var H = {A:15, B:12, C:10, D:7, E:11, G:0};
+    var off = {A:[0,-25], B:[0,-25], C:[0,28], D:[0,28], E:[0,-25], G:[0,-25]};
+    var E = [["A","B"],["A","C"],["C","D"],["C","E"],["D","G"]];
+    var s = '<svg viewBox="0 0 446 166" width="430" role="img" aria-label="Grafo com heurísticas de A até G">';
+    for (var i=0;i<E.length;i++){ var a=P[E[i][0]], b=P[E[i][1]]; s += aresta(a[0],a[1],b[0],b[1]); }
+    for (var k in P){
+      s += no(P[k][0], P[k][1], k, k === "A" ? "node-inicio" : (k === "G" ? "node-obj" : ""));
+      s += hl(P[k][0] + off[k][0], P[k][1] + off[k][1], "h=" + H[k]);
+    }
+    return s + '</svg>';
+  })();
+
+  /* ========== atalhos para montar células ========== */
+  function S(t, destaque){ return {est:t, destaque:!!destaque}; }
+  function co(ok, ph){ return {tipo:"coords", ok:ok, ph:ph || "(l,c)"}; }
+  function cos(ok){ return {tipo:"coords", ok:ok, ph:"(l,c) (l,c) …", wide:true}; }
+  function le(ok, ph){ return {tipo:"letras", ok:ok, ph:ph || "A"}; }
+  function nu(ok){ return {tipo:"num", ok:ok, ph:"0"}; }
+
+  /* ========== exercícios ========== */
+  var EX = [
+
+  { titulo:"BFS no labirinto — as 8 primeiras iterações",
+    tag:"Exercício 1 · busca em largura",
+    fig: mazeFig("S = (0,0) · G = (4,6)<br>vizinhos: cima → direita → baixo → esquerda"),
+    intro:"Execute a BFS e preencha, a cada iteração, <strong>qual nó saiu da fila</strong> e <strong>como a fila ficou depois</strong> de inserir os vizinhos livres ainda não visitados. A primeira linha já está preenchida como exemplo. Lembre: na BFS o estado é marcado como visitado <strong>ao entrar na fila</strong>.",
+    cols:["Iteração","Nó expandido","Fila depois (início → fim)"],
+    linhas:[
+      [S("1"), S("(0,0)", true), S("(0,1)", true)],
+      [S("2"), co("(0,1)"), cos("(0,2)")],
+      [S("3"), co("(0,2)"), cos("(1,2)")],
+      [S("4"), co("(1,2)"), cos("(2,2)")],
+      [S("5"), co("(2,2)"), cos("(2,3) (2,1)")],
+      [S("6"), co("(2,3)"), cos("(2,1) (2,4)")],
+      [S("7"), co("(2,1)"), cos("(2,4) (2,0)")],
+      [S("8"), co("(2,4)"), cos("(2,0) (1,4) (3,4)")]
+    ],
+    dica:"<p>Na iteração 5 o nó <code>(2,2)</code> tem dois vizinhos livres: <code>(2,3)</code> pela direita e <code>(2,1)</code> pela esquerda. Como a ordem é cima → direita → baixo → esquerda, <code>(2,3)</code> entra na fila antes de <code>(2,1)</code> — e como é uma fila, sai antes também.</p><p>Repare no efeito de largura: nas iterações 6, 7 e 8 a BFS está processando nós da <em>mesma faixa de distância</em> da origem, avançando em frente ampla em vez de escolher um caminho.</p>"},
+
+  { titulo:"DFS no labirinto — as 8 primeiras iterações",
+    tag:"Exercício 2 · busca em profundidade",
+    fig: mazeFig("mesmo labirinto<br>exploração: cima → direita → baixo → esquerda"),
+    intro:"Agora a mesma coisa com pilha. Atenção à inversão: para <em>explorar</em> na ordem cima → direita → baixo → esquerda, os vizinhos são <strong>empilhados na ordem inversa</strong>. Escreva a pilha da <strong>base para o topo</strong> — ou seja, o último da sua lista é o próximo a sair.",
+    cols:["Iteração","Nó expandido","Pilha depois (base → topo)"],
+    linhas:[
+      [S("1"), S("(0,0)", true), S("(0,1)", true)],
+      [S("2"), co("(0,1)"), cos("(0,2)")],
+      [S("3"), co("(0,2)"), cos("(1,2)")],
+      [S("4"), co("(1,2)"), cos("(2,2)")],
+      [S("5"), co("(2,2)"), cos("(2,1) (2,3)")],
+      [S("6"), co("(2,3)"), cos("(2,1) (2,4)")],
+      [S("7"), co("(2,4)"), cos("(2,1) (3,4) (1,4)")],
+      [S("8"), co("(1,4)"), cos("(2,1) (3,4) (0,4)")]
+    ],
+    dica:"<p>Iteração 5, o ponto da inversão: os vizinhos livres de <code>(2,2)</code> são <code>(2,3)</code> (direita) e <code>(2,1)</code> (esquerda). Empilhando <strong>ao contrário</strong>, entra primeiro <code>(2,1)</code> e depois <code>(2,3)</code> — então <code>(2,3)</code> fica no topo e é o próximo a sair, que é o comportamento desejado.</p><p>E aqui está a diferença visível para a BFS: <code>(2,1)</code> fica parado na base da pilha do passo 5 até o fim da busca, porque a DFS só mexe no topo.</p>"},
+
+  { titulo:"Ordem de visita: BFS × DFS no mesmo grafo",
+    tag:"Exercício 3 · comparação direta",
+    fig:'<div>' + GRAFO_AI + '<p class="figcap">raiz A · arestas para baixo · escreva só as letras</p></div>',
+    intro:"Percorra o grafo a partir de <strong>A</strong>, sempre visitando os filhos da esquerda para a direita. Escreva a sequência completa de visita de cada algoritmo, e depois responda em que nível cada um encontraria o nó <strong>I</strong>.",
+    cols:["Pergunta","Resposta"],
+    linhas:[
+      [S("Ordem de visita da BFS"), le("ABCDEFGHI","A B C D …")],
+      [S("Ordem de visita da DFS"), le("ABDHECFIG","A B D …")],
+      [S("Em que posição a BFS visita H?"), nu("8")],
+      [S("Em que posição a DFS visita H?"), nu("4")]
+    ],
+    dica:"<p>BFS por níveis: <strong>A</strong> | <strong>B C</strong> | <strong>D E F G</strong> | <strong>H I</strong>. A ordem de visita é a leitura direta dessa estrutura, e H cai na 8ª posição.</p><p>DFS mergulhando: A → B → D → H, e aí H já aparece na <strong>4ª</strong> posição. Só depois ela volta para E, sobe para C e desce por F → I, terminando em G. Esse contraste — o mesmo nó em 8º ou em 4º lugar — é a resposta para “qual é mais rápido?”: depende inteiramente de onde está a solução.</p>"},
+
+  { titulo:"Dijkstra: tabela final de distâncias e pais",
+    tag:"Exercício 4 · busca por custo",
+    fig:'<div>' + GRAFO_AE + '<p class="figcap">grafo da aula 08 · origem em A · números são pesos das arestas</p></div>',
+    intro:"Rode o Dijkstra a partir de <strong>A</strong> até fechar todos os vértices, e preencha a tabela final. Em “pai”, escreva a letra do vértice de onde veio o melhor caminho. Depois informe a ordem em que os vértices foram fechados (marcados como visitados).",
+    cols:["Vértice","Distância final","Pai"],
+    linhas:[
+      [S("A", true), nu("0"), S("—")],
+      [S("B", true), nu("5"), le("A")],
+      [S("C", true), nu("4"), le("A")],
+      [S("D", true), nu("6"), le("C")],
+      [S("E", true), nu("8"), le("C")],
+      [S("Ordem em que foram fechados"), {tipo:"letras", ok:"ACBDE", ph:"A ? ? ? ?", span:2}]
+    ],
+    dica:"<p>Os dois relaxamentos que decidem a tabela:</p><p><strong>D</strong> — por C custa 4+2 = <strong>6</strong>; por B custaria 5+3 = 8. Fica 6, com pai C.</p><p><strong>E</strong> — por C custa 4+4 = <strong>8</strong>; por D custaria 6+5 = 11. Fica 8, com pai C.</p><p>A ordem de fechamento é sempre pelo menor acumulado disponível: A(0), C(4), B(5), D(6), E(8). <strong>Cuidado com a pegadinha:</strong> o menor caminho até E custa 8, não 6 — o 6 é a distância até D.</p>"},
+
+  { titulo:"Dijkstra × A* no mesmo grafo",
+    tag:"Exercício 5 · o valor da heurística",
+    fig:'<div>' + GRAFO_SG + '<p class="figcap">pesos nas arestas · h de cada nó abaixo/acima do círculo · início S, objetivo G</p></div>',
+    intro:"Este é o exercício que mostra para que serve a heurística. Rode os <strong>dois</strong> algoritmos no mesmo grafo, de S até G, e compare quantos nós cada um precisou expandir. Escreva a ordem de expansão (as letras dos nós que saíram da fronteira, na ordem).",
+    cols:["Pergunta","Resposta"],
+    linhas:[
+      [S("Ordem de expansão do Dijkstra"), le("SABCDG","S ? ? …")],
+      [S("Ordem de expansão do A*"), le("SBCDG","S ? ? …")],
+      [S("Caminho final (igual nos dois)"), le("SBCDG","S ? ? …")],
+      [S("Custo total do caminho"), nu("9")],
+      [S("Qual nó o A* nunca expandiu?"), le("A")]
+    ],
+    dica:"<p>O Dijkstra expande <strong>A</strong> na segunda rodada só porque <code>g(A) = 2</code> é o menor acumulado do momento — mesmo A sendo um caminho ruim. Ele não tem como saber disso: é cego.</p><p>O A* olha <code>f(A) = g + h = 2 + 8 = 10</code> e percebe que A é promessa cara. Prefere B, com <code>f(B) = 3 + 4 = 7</code>. Resultado: <strong>5 expansões contra 6</strong>, e A nunca é aberto.</p><p>Os dois chegam ao mesmo caminho <code>S → B → C → D → G</code> de custo <strong>9</strong> — a heurística não muda a resposta, muda o trabalho gasto para chegar nela. É exatamente isso que significa “A* é ótimo e mais eficiente que Dijkstra”.</p>"},
+
+  { titulo:"A*: a tabela f(n) = g(n) + h(n), passo a passo",
+    tag:"Exercício 6 · o momento da atualização",
+    fig:'<div>' + GRAFO_SG + '<p class="figcap">mesmo grafo do exercício anterior</p></div>',
+    intro:"Agora detalhe o A*. A cada iteração, informe o nó expandido, seu <code>g</code> e seu <code>f</code>. Preste atenção na iteração 3: um nó já descoberto recebe um caminho mais barato e tem o custo <strong>reescrito</strong> — é a característica que separa o A* da busca gulosa.",
+    cols:["Iteração","Nó expandido","g(n)","f(n) = g + h"],
+    linhas:[
+      [S("1"), S("S", true), S("0", true), S("7", true)],
+      [S("2"), le("B"), nu("3"), nu("7")],
+      [S("3"), le("C"), nu("4"), nu("8")],
+      [S("4"), le("D"), nu("6"), nu("9")],
+      [S("5"), le("G"), nu("9"), nu("9")],
+      [S("Na iteração 3, g(D) caiu de … "), nu("9"), S("para …"), nu("6")]
+    ],
+    dica:"<p>Iteração 1 — expande S: descobre A com <code>g=2, f=10</code> e B com <code>g=3, f=7</code>.</p><p>Iteração 2 — expande B (menor f): descobre C com <code>g=4, f=8</code> e D com <code>g = 3+6 = 9, f = 12</code>.</p><p>Iteração 3 — expande C, e aqui está o ponto: chegar em D <em>por C</em> custa <code>4 + 2 = 6</code>, melhor que os 9 registrados. O A* <strong>atualiza g(D) de 9 para 6 e troca o pai de B para C</strong>. O f de D cai de 12 para 9.</p><p>Sem essa atualização, o algoritmo terminaria com um caminho pior. A busca gulosa não faz isso porque nem acompanha custo.</p>"},
+
+  { titulo:"Busca gulosa: a fronteira inteira, não só os filhos",
+    tag:"Exercício 7 · greedy best-first",
+    fig:'<div>' + GRAFO_GUL + '<p class="figcap">só heurísticas, sem peso nas arestas · início A, objetivo G</p></div>',
+    intro:"Complete o traçado da busca gulosa de A até G. Em “candidatos”, liste <strong>todos os nós disponíveis na fronteira</strong> naquele momento — inclusive os que sobraram de passos anteriores, que é justamente onde a maioria erra.",
+    cols:["Passo","Nó atual","Candidatos na fronteira","Escolhido"],
+    linhas:[
+      [S("1"), S("A", true), {tipo:"letras", ok:"BC", ph:"letras", wide:true}, le("C")],
+      [S("2"), le("C"), {tipo:"letras", ok:"BDE", ph:"letras", wide:true}, le("D")],
+      [S("3"), le("D"), {tipo:"letras", ok:"BEG", ph:"letras", wide:true}, le("G")],
+      [S("Caminho encontrado"), {tipo:"letras", ok:"ACDG", ph:"A ? ? G", span:3}]
+    ],
+    dica:"<p>Passo 1: de A, a fronteira tem B(12) e C(10) → escolhe <strong>C</strong>.<br>Passo 2: a fronteira agora tem B(12), que <em>sobrou</em>, mais D(7) e E(11) → escolhe <strong>D</strong>.<br>Passo 3: sobram B(12) e E(11), e entra G(0) → escolhe <strong>G</strong>.</p><p>O erro clássico é comparar só os filhos do nó atual. A busca gulosa escolhe o menor <code>h</code> de <strong>toda a fronteira</strong>, e nós antigos continuam concorrendo — foi assim que B ficou disponível do começo ao fim sem nunca ser escolhido.</p>"}
+  ];
+
+  /* ========== normalização das respostas ========== */
+  function normCoords(v){
+    var m = String(v).match(/\d+\s*,\s*\d+/g) || [];
+    return m.map(function(x){ return x.replace(/\s+/g, ""); }).join(" ");
+  }
+  function normLetras(v){
+    var m = String(v).toUpperCase().match(/[A-Z]/g) || [];
+    /* "vazia"/"nenhum" contam como resposta em branco */
+    var s = m.join("");
+    if (/^(VAZIA|VAZIO|NENHUM|NADA)$/.test(s)) return "";
+    return s;
+  }
+  function normNum(v){
+    var m = String(v).replace(",", ".").match(/-?\d+(\.\d+)?/);
+    return m ? String(parseFloat(m[0])) : "";
+  }
+  function normalizar(tipo, v){
+    if (tipo === "coords") return normCoords(v);
+    if (tipo === "letras") return normLetras(v);
+    if (tipo === "num")    return normNum(v);
+    return String(v).trim().toLowerCase();
+  }
+
+  /* ========== render ========== */
+  var app = document.getElementById("app");
+  var todos = [];
+
+  EX.forEach(function(ex, idx){
+    var card = document.createElement("section");
+    card.className = "ex";
+
+    var html = '<span class="ex-num">' + ex.tag + '</span>';
+    html += '<h2>' + ex.titulo + '</h2>';
+    html += '<div class="fig">' + ex.fig + '</div>';
+    html += '<p class="intro">' + ex.intro + '</p>';
+
+    html += '<div class="tw"><table><thead><tr>';
+    for (var c=0;c<ex.cols.length;c++) html += '<th>' + ex.cols[c] + '</th>';
+    html += '</tr></thead><tbody>';
+
+    ex.linhas.forEach(function(linha, li){
+      html += '<tr>';
+      linha.forEach(function(cel){
+        if (cel.est !== undefined){
+          html += '<td class="cell-static' + (cel.destaque ? " destaque" : "") + '">' + cel.est + '</td>';
+        } else {
+          var span = cel.span ? ' colspan="' + cel.span + '"' : "";
+          html += '<td' + span + (cel.wide ? ' class="wide"' : "") + '>' +
+                  '<input class="campo" type="text" autocomplete="off" spellcheck="false" ' +
+                  'data-ex="' + idx + '" data-tipo="' + cel.tipo + '" ' +
+                  'placeholder="' + cel.ph + '" aria-label="' + ex.cols[0] + ' linha ' + (li+1) + '">' +
+                  '</td>';
+        }
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+
+    html += '<div class="acoes">' +
+            '<button type="button" class="btn verificar">Verificar</button>' +
+            '<button type="button" class="btn ghost mostrar">Mostrar respostas</button>' +
+            '<button type="button" class="btn ghost limpar">Limpar</button>' +
+            '<span class="placar"></span></div>';
+
+    html += '<div class="dica"><b>Como se chega lá</b>' + ex.dica + '</div>';
+
+    card.innerHTML = html;
+    app.appendChild(card);
+
+    /* liga cada input ao seu gabarito, na mesma ordem de criação */
+    var inputs = card.querySelectorAll("input.campo");
+    var gabs = [];
+    ex.linhas.forEach(function(linha){
+      linha.forEach(function(cel){ if (cel.est === undefined) gabs.push(cel.ok); });
+    });
+
+    var registro = [];
+    for (var i=0;i<inputs.length;i++){
+      registro.push({el:inputs[i], ok:gabs[i], tipo:inputs[i].getAttribute("data-tipo"), certo:false});
+      todos.push(registro[registro.length-1]);
+      inputs[i].addEventListener("input", function(){
+        this.classList.remove("ok","no","revelado");
+        atualizarTally();
+      });
+      inputs[i].addEventListener("keydown", function(e){
+        if (e.key === "Enter"){
+          var lista = card.querySelectorAll("input.campo");
+          for (var n=0;n<lista.length;n++){
+            if (lista[n] === this && lista[n+1]){ lista[n+1].focus(); return; }
+          }
+          card.querySelector(".verificar").click();
+        }
+      });
+    }
+
+    function conferir(){
+      var acertos = 0;
+      registro.forEach(function(r){
+        var dado = normalizar(r.tipo, r.el.value);
+        var esperado = normalizar(r.tipo, r.ok);
+        var certo = (dado === esperado);
+        r.certo = certo;
+        r.el.classList.remove("ok","no","revelado");
+        r.el.classList.add(certo ? "ok" : "no");
+        if (certo) acertos++;
+      });
+      var p = card.querySelector(".placar");
+      p.textContent = acertos + " de " + registro.length + " corretos";
+      p.classList.toggle("tudo", acertos === registro.length);
+      if (acertos < registro.length) card.classList.add("mostrando");
+      atualizarTally();
+    }
+
+    card.querySelector(".verificar").addEventListener("click", conferir);
+
+    card.querySelector(".mostrar").addEventListener("click", function(){
+      registro.forEach(function(r){
+        r.el.value = r.ok;
+        r.el.classList.remove("ok","no");
+        r.el.classList.add("revelado");
+        r.certo = false;
+      });
+      card.classList.add("mostrando");
+      var p = card.querySelector(".placar");
+      p.textContent = "respostas reveladas";
+      p.classList.remove("tudo");
+      atualizarTally();
+    });
+
+    card.querySelector(".limpar").addEventListener("click", function(){
+      registro.forEach(function(r){
+        r.el.value = "";
+        r.el.classList.remove("ok","no","revelado");
+        r.certo = false;
+      });
+      card.classList.remove("mostrando");
+      card.querySelector(".placar").textContent = "";
+      atualizarTally();
+      registro[0].el.focus();
+    });
+  });
+
+  function atualizarTally(){
+    var certos = 0;
+    for (var i=0;i<todos.length;i++) if (todos[i].certo) certos++;
+    document.getElementById("tally").innerHTML =
+      "campos corretos <b>" + certos + "</b>/" + todos.length;
+    document.getElementById("bar").style.width = (certos / todos.length * 100) + "%";
+  }
+
+  atualizarTally();
+})();
+</script>
+<script src="theme.js" defer></script>
+</body>
+</html>

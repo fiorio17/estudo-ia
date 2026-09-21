@@ -1,0 +1,1658 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Guia completo de Inteligencia Artificial com simulador interativo de BFS, DFS, Dijkstra, busca gulosa e A*.">
+  <title>Guia de revisão — Inteligência Artificial</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🧭%3C/text%3E%3C/svg%3E">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;}
+    html{-webkit-text-size-adjust:100%;}
+    body{margin:0;}
+    img,svg,video{max-width:100%;height:auto;}
+    button,input,select,textarea{font:inherit;color:inherit;}
+    table{border-collapse:collapse;}
+  </style>
+</head>
+<body>
+<style>
+:root{
+  --paper:#EFEDF2; --surface:#FBFAFD; --surface-2:#E7E4EE;
+  --ink:#1B1622; --ink-soft:#5D5670; --line:#D6D1E0; --grid:#DFDAE8;
+  --accent:#8A2D6E; --accent-soft:#F4DCEE; --accent-ink:#FFFFFF;
+  --amber:#A65A0B; --amber-soft:#F7E6D2;
+  --visited:#D3CDDF; --wall:#2A2333; --good:#1B6B49; --goal:#0F5F6B;
+  --shadow:0 1px 2px rgba(27,22,34,.06), 0 8px 24px -12px rgba(27,22,34,.18);
+  --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Menlo,Consolas,monospace;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --display:Georgia,"Iowan Old Style","Palatino Linotype","Times New Roman",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#141119; --surface:#1D1926; --surface-2:#272232;
+    --ink:#EDE9F4; --ink-soft:#ABA2BE; --line:#332C41; --grid:#221D2C;
+    --accent:#E98FCE; --accent-soft:#3F1B37; --accent-ink:#1B1622;
+    --amber:#E7A45C; --amber-soft:#3A2A18;
+    --visited:#3A3349; --wall:#0B0910; --good:#5FD3A0; --goal:#6FD2DE;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141119; --surface:#1D1926; --surface-2:#272232;
+  --ink:#EDE9F4; --ink-soft:#ABA2BE; --line:#332C41; --grid:#221D2C;
+  --accent:#E98FCE; --accent-soft:#3F1B37; --accent-ink:#1B1622;
+  --amber:#E7A45C; --amber-soft:#3A2A18;
+  --visited:#3A3349; --wall:#0B0910; --good:#5FD3A0; --goal:#6FD2DE;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+:root[data-theme="light"]{
+  --paper:#EFEDF2; --surface:#FBFAFD; --surface-2:#E7E4EE;
+  --ink:#1B1622; --ink-soft:#5D5670; --line:#D6D1E0; --grid:#DFDAE8;
+  --accent:#8A2D6E; --accent-soft:#F4DCEE; --accent-ink:#FFFFFF;
+  --amber:#A65A0B; --amber-soft:#F7E6D2;
+  --visited:#D3CDDF; --wall:#2A2333; --good:#1B6B49; --goal:#0F5F6B;
+  --shadow:0 1px 2px rgba(27,22,34,.06), 0 8px 24px -12px rgba(27,22,34,.18);
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--body); font-size:16.5px; line-height:1.62;
+  background-image:
+    repeating-linear-gradient(to right, var(--grid) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(to bottom, var(--grid) 0 1px, transparent 1px 28px);
+  -webkit-font-smoothing:antialiased;
+}
+.page{max-width:1180px; margin:0 auto; padding:0 20px 96px;}
+
+/* ---------- topo ---------- */
+.masthead{padding:56px 0 28px; border-bottom:2px solid var(--ink); margin-bottom:34px;}
+.eyebrow{
+  font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-soft); margin:0 0 14px;
+}
+h1{
+  font-family:var(--display); font-weight:700; font-size:clamp(2.3rem,6vw,3.6rem);
+  line-height:1.04; letter-spacing:-.02em; margin:0 0 16px; text-wrap:balance;
+}
+h1 em{font-style:italic; color:var(--accent);}
+.lede{font-size:1.1rem; color:var(--ink-soft); max-width:60ch; margin:0;}
+
+.priority{
+  display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(215px,1fr));
+  margin:30px 0 0; padding:0; list-style:none;
+}
+.priority li{
+  background:var(--surface); border:1px solid var(--line); border-radius:3px;
+  padding:14px 16px; box-shadow:var(--shadow);
+}
+.priority b{display:block; font-family:var(--mono); font-size:.7rem; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--accent); margin-bottom:5px;}
+.priority span{font-size:.93rem; color:var(--ink-soft); line-height:1.5;}
+
+/* ---------- layout ---------- */
+.shell{display:grid; grid-template-columns:200px minmax(0,1fr); gap:46px; align-items:start;}
+@media (max-width:900px){ .shell{grid-template-columns:1fr; gap:0;} nav.rail{display:none;} }
+
+nav.rail{position:sticky; top:24px; font-size:.87rem;}
+nav.rail p{font-family:var(--mono); font-size:.68rem; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--ink-soft); margin:0 0 10px;}
+nav.rail a{display:block; padding:5px 0 5px 12px; color:var(--ink-soft); text-decoration:none;
+  border-left:2px solid var(--line); transition:color .15s, border-color .15s;}
+nav.rail a:hover, nav.rail a:focus-visible{color:var(--accent); border-left-color:var(--accent);}
+nav.rail hr{border:0; border-top:1px solid var(--line); margin:12px 0;}
+
+main{min-width:0;}
+section{margin:0 0 60px; scroll-margin-top:24px;}
+.prose{max-width:68ch;}
+
+h2{
+  font-family:var(--display); font-size:clamp(1.55rem,3.3vw,2.05rem); line-height:1.15;
+  letter-spacing:-.015em; margin:0 0 6px; text-wrap:balance;
+}
+h2 .num{font-family:var(--mono); font-size:.8rem; color:var(--accent); letter-spacing:.1em;
+  display:block; margin-bottom:8px; font-weight:400;}
+h3{font-family:var(--display); font-size:1.22rem; margin:34px 0 8px; letter-spacing:-.01em;}
+h4{font-size:.98rem; margin:22px 0 6px; letter-spacing:.005em;}
+p{margin:0 0 14px;}
+a{color:var(--accent);}
+ul,ol{margin:0 0 14px; padding-left:22px;}
+li{margin-bottom:7px;}
+strong{font-weight:650;}
+code{font-family:var(--mono); font-size:.87em; background:var(--surface-2); padding:.12em .36em; border-radius:2px;}
+
+.callout{
+  background:var(--surface); border:1px solid var(--line); border-radius:3px;
+  padding:16px 18px; margin:22px 0; box-shadow:var(--shadow);
+}
+.callout p:last-child{margin-bottom:0;}
+.callout .tag{
+  font-family:var(--mono); font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--accent); display:block; margin-bottom:7px;
+}
+.callout.warn .tag{color:var(--amber);}
+
+.formula{
+  font-family:var(--mono); font-size:1.02rem; background:var(--surface); border:1px solid var(--line);
+  padding:14px 18px; border-radius:3px; margin:16px 0; overflow-x:auto; white-space:nowrap;
+}
+
+/* ---------- tabelas ---------- */
+.scroller{overflow-x:auto; margin:18px 0; border:1px solid var(--line); border-radius:3px; background:var(--surface);}
+table{border-collapse:collapse; width:100%; font-size:.91rem; min-width:520px;}
+th,td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+thead th{font-family:var(--mono); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-soft); background:var(--surface-2); white-space:nowrap;}
+tbody tr:last-child td{border-bottom:0;}
+td.num, th.num{font-family:var(--mono); font-variant-numeric:tabular-nums;}
+
+/* ---------- código ---------- */
+pre{
+  font-family:var(--mono); font-size:.83rem; line-height:1.6; background:var(--surface);
+  border:1px solid var(--line); border-radius:3px; padding:16px 18px; overflow-x:auto; margin:16px 0;
+  box-shadow:var(--shadow);
+}
+pre b{color:var(--accent); font-weight:600;}
+pre i{color:var(--ink-soft); font-style:normal;}
+
+/* ---------- simulador ---------- */
+.lab{
+  background:var(--surface); border:1px solid var(--line); border-radius:4px;
+  padding:22px; margin:26px 0; box-shadow:var(--shadow);
+}
+.lab-head{display:flex; flex-wrap:wrap; gap:14px; align-items:baseline; justify-content:space-between; margin-bottom:16px;}
+.lab-head h3{margin:0; font-size:1.15rem;}
+.segmented{display:flex; flex-wrap:wrap; gap:6px;}
+button{font-family:inherit; font-size:.85rem; cursor:pointer;}
+.seg{
+  background:var(--surface-2); border:1px solid var(--line); color:var(--ink-soft);
+  padding:6px 13px; border-radius:2px; transition:background .15s,color .15s,border-color .15s;
+}
+.seg:hover{color:var(--ink);}
+.seg[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--accent-ink);}
+.seg:focus-visible, .ctrl:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+.lab-body{display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:24px; align-items:start;}
+@media (max-width:760px){ .lab-body{grid-template-columns:1fr;} }
+
+.maze{display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-bottom:6px;}
+.cell{
+  position:relative; aspect-ratio:1; border-radius:2px; background:var(--surface-2);
+  border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:.8rem; font-variant-numeric:tabular-nums; color:var(--ink-soft);
+  transition:background .18s, border-color .18s, color .18s;
+}
+.cell.wall{background:var(--wall); border-color:var(--wall);}
+.cell.mud::after{
+  content:""; position:absolute; inset:0; border-radius:1px; pointer-events:none;
+  background:repeating-linear-gradient(45deg, var(--amber) 0 2px, transparent 2px 6px); opacity:.35;
+}
+.cell.visited{background:var(--visited); border-color:var(--visited); color:var(--ink);}
+.cell.frontier{background:var(--amber-soft); border-color:var(--amber); color:var(--amber); font-weight:600;}
+.cell.current{background:var(--ink); border-color:var(--ink); color:var(--paper); font-weight:700;}
+.cell.path{background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:700;}
+.cell .tagmark{
+  position:absolute; top:2px; left:3px; font-size:.6rem; font-weight:700; letter-spacing:.04em;
+}
+.cell.sg{border-width:2px; border-color:var(--goal);}
+.cell .hval{position:absolute; bottom:1px; right:3px; font-size:.58rem; opacity:.72;}
+@media (prefers-reduced-motion:reduce){ .cell{transition:none;} }
+
+.axis{display:grid; grid-template-columns:repeat(7,1fr); gap:3px; font-family:var(--mono);
+  font-size:.65rem; color:var(--ink-soft); text-align:center; margin-bottom:3px;}
+
+.ctrls{display:flex; flex-wrap:wrap; gap:7px; margin-top:14px;}
+.ctrl{
+  background:var(--ink); color:var(--paper); border:1px solid var(--ink);
+  padding:7px 15px; border-radius:2px; font-weight:550;
+}
+.ctrl.ghost{background:transparent; color:var(--ink-soft); border-color:var(--line);}
+.ctrl.ghost[aria-pressed="true"]{border-color:var(--accent); color:var(--accent);}
+.ctrl:disabled{opacity:.4; cursor:not-allowed;}
+
+.readout{font-size:.88rem;}
+.readout .row{
+  display:grid; grid-template-columns:82px minmax(0,1fr); gap:10px; padding:8px 0;
+  border-bottom:1px solid var(--line);
+}
+.readout .row:last-of-type{border-bottom:0;}
+.readout .k{font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); padding-top:3px;}
+.chips{display:flex; flex-wrap:wrap; gap:4px;}
+.chip{font-family:var(--mono); font-size:.73rem; background:var(--surface-2); border:1px solid var(--line);
+  padding:1px 6px; border-radius:2px; font-variant-numeric:tabular-nums;}
+.chip.hot{background:var(--amber-soft); border-color:var(--amber); color:var(--amber);}
+.chip.done{background:var(--accent-soft); border-color:var(--accent); color:var(--accent);}
+.note{font-family:var(--mono); font-size:.76rem; line-height:1.75; color:var(--ink-soft); margin:0;}
+.note b{color:var(--ink); font-weight:600;}
+.step-state{font-family:var(--mono); font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);}
+
+.legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:16px; font-size:.78rem; color:var(--ink-soft);}
+.legend span{display:flex; align-items:center; gap:6px;}
+.sw{width:13px; height:13px; border-radius:2px; border:1px solid var(--line); flex:none;}
+
+/* ---------- flashcards ---------- */
+.cards{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); margin-top:20px;}
+.card{
+  background:var(--surface); border:1px solid var(--line); border-radius:3px; padding:0;
+  box-shadow:var(--shadow); overflow:hidden;
+}
+.card button{
+  width:100%; text-align:left; background:none; border:0; padding:14px 16px; color:var(--ink);
+  font-size:.95rem; font-weight:600; line-height:1.45; display:flex; gap:10px; align-items:flex-start;
+}
+.card button:focus-visible{outline:2px solid var(--accent); outline-offset:-2px;}
+.card button::before{content:"?"; font-family:var(--mono); color:var(--accent); font-weight:700; flex:none;}
+.card .ans{padding:0 16px 15px 32px; font-size:.9rem; color:var(--ink-soft); display:none;}
+.card.open .ans{display:block;}
+.card .ans code{font-size:.85em;}
+
+footer{margin-top:60px; padding-top:22px; border-top:1px solid var(--line); font-size:.85rem; color:var(--ink-soft);}
+</style>
+
+<div class="page">
+
+<header class="masthead">
+  <p class="eyebrow">Revisão para a prova · Inteligência Artificial</p>
+  <h1>Tudo cai na <em>grade</em>.</h1>
+  <p class="lede">Nove aulas condensadas, com peso onde o professor avisou que vai pesar: busca cega (aula 07) e busca por custo e informada (aula 08). O simulador abaixo roda os cinco algoritmos no mesmo labirinto dos slides.</p>
+
+  <ul class="priority">
+    <li><b>Peso máximo</b><span>BFS, DFS, Dijkstra, Gulosa e A* — traçar à mão, passo a passo.</span></li>
+    <li><b>Peso alto</b><span>Teoria: agentes, PEAS, IA simbólica × dados, riscos.</span></li>
+    <li><b>Peso médio</b><span>Código Python: o labirinto e o agente do professor.</span></li>
+    <li><b>Bônus</b><span>Prolog — ele disse que não cai. Está no fim, por garantia.</span></li>
+  </ul>
+</header>
+
+<div class="shell">
+
+<nav class="rail" aria-label="Sumário">
+  <p>Sumário</p>
+  <a href="#simulador">Simulador</a>
+  <a href="#problema">O problema de busca</a>
+  <a href="#bfs">BFS — largura</a>
+  <a href="#dfs">DFS — profundidade</a>
+  <a href="#dijkstra">Dijkstra — custo</a>
+  <a href="#heuristica">Heurísticas</a>
+  <a href="#gulosa">Busca gulosa</a>
+  <a href="#astar">A*</a>
+  <a href="#comparacao">Comparação</a>
+  <hr>
+  <a href="#codigo">Código Python</a>
+  <a href="#agentes">Agentes e PEAS</a>
+  <a href="#fundamentos">Fundamentos</a>
+  <a href="#riscos">Riscos</a>
+  <a href="#historico">Histórico</a>
+  <hr>
+  <a href="#prolog">Prolog (bônus)</a>
+  <a href="#autoteste">Autoteste</a>
+</nav>
+
+<main>
+
+<!-- ============ SIMULADOR ============ -->
+<section id="simulador">
+  <h2><span class="num">Ferramenta</span>Simulador do labirinto</h2>
+  <div class="prose">
+    <p>Este é exatamente o labirinto 5×7 dos slides: <code>S = (0,0)</code>, <code>G = (4,6)</code>, e a ordem de vizinhos que o professor usa em toda a aula — <strong>cima → direita → baixo → esquerda</strong>. Aperte <em>Passo</em> e acompanhe a fila, a pilha ou a fronteira se comportando como no quadro.</p>
+  </div>
+
+  <div class="lab">
+    <div class="lab-head">
+      <h3 id="labTitle">Busca em largura (BFS)</h3>
+      <div class="segmented" role="group" aria-label="Escolher algoritmo">
+        <button class="seg" data-algo="bfs" aria-pressed="true">BFS</button>
+        <button class="seg" data-algo="dfs" aria-pressed="false">DFS</button>
+        <button class="seg" data-algo="dij" aria-pressed="false">Dijkstra</button>
+        <button class="seg" data-algo="gbfs" aria-pressed="false">Gulosa</button>
+        <button class="seg" data-algo="astar" aria-pressed="false">A*</button>
+      </div>
+    </div>
+
+    <div class="lab-body">
+      <div>
+        <div class="axis" id="axis"></div>
+        <div class="maze" id="maze" role="img" aria-label="Labirinto 5 por 7 com o estado atual da busca"></div>
+        <div class="ctrls">
+          <button class="ctrl" id="btnStep">Passo</button>
+          <button class="ctrl" id="btnAuto">Auto</button>
+          <button class="ctrl ghost" id="btnReset">Reiniciar</button>
+          <button class="ctrl ghost" id="btnH" aria-pressed="false">Mostrar h</button>
+        </div>
+        <div class="legend legend--maze">
+          <span><i class="sw" style="background:var(--wall)"></i>parede</span>
+          <span><i class="sw" style="background:var(--ink)"></i>expandindo</span>
+          <span><i class="sw" style="background:var(--amber-soft);border-color:var(--amber)"></i>fronteira</span>
+          <span><i class="sw" style="background:var(--visited)"></i>visitado</span>
+          <span><i class="sw" style="background:var(--accent)"></i>caminho final</span>
+        </div>
+      </div>
+
+      <div class="readout">
+        <div class="row"><span class="k">Iteração</span><span class="step-state" id="rIter">—</span></div>
+        <div class="row"><span class="k" id="kFront">Fila</span><span class="chips" id="rFront"></span></div>
+        <div class="row"><span class="k">Visitados</span><span class="chips" id="rVis"></span></div>
+        <div class="row"><span class="k">Expandindo</span><span class="step-state" id="rCur">—</span></div>
+        <div class="row"><span class="k">Vizinhos</span><p class="note" id="rNote">—</p></div>
+        <div class="row"><span class="k">Resultado</span><p class="note" id="rResult">Busca em andamento.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prose">
+    <div class="callout warn">
+      <span class="tag">Detalhe que muda a contagem de iterações</span>
+      <p>Existem dois momentos possíveis para testar se chegou ao objetivo: <strong>ao gerar</strong> o vizinho ou <strong>ao expandi-lo</strong> (tirá-lo da fronteira). O professor traça no quadro testando <em>ao gerar</em> — por isso o BFS dele termina na iteração 17, quando expande <code>(4,5)</code> e enxerga <code>(4,6)</code>. Se o teste fosse na expansão, o objetivo ficaria no fim da fila e o BFS gastaria 21 iterações para o mesmo caminho.</p>
+      <p>O simulador segue a aula em BFS, DFS e gulosa. Em <strong>Dijkstra e A*</strong> ele testa na expansão, que é a forma correta: são justamente esses dois que podem descobrir um caminho mais barato <em>depois</em> de já terem tocado o objetivo — parar cedo demais quebraria a garantia de otimalidade.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROBLEMA ============ -->
+<section id="problema">
+  <h2><span class="num">Aula 07 · base</span>O que é um problema de busca</h2>
+  <div class="prose">
+    <p>Todo problema de busca da disciplina é descrito por cinco elementos. Se a prova pedir “formalize o problema”, é isso que ele quer ver:</p>
+    <ol>
+      <li><strong>Estado inicial</strong> — onde o agente começa. No labirinto, <code>(0,0)</code>.</li>
+      <li><strong>Espaço de estados</strong> — todas as configurações possíveis. Aqui, cada célula livre é um estado <code>(linha, coluna)</code>.</li>
+      <li><strong>Ações</strong> — o que o agente pode fazer: <code>↑ ↓ ← →</code>.</li>
+      <li><strong>Função de transição</strong> — a regra que diz que só é possível ir para uma posição válida e que não seja parede.</li>
+      <li><strong>Teste de objetivo</strong> — chegou em <code>(4,6)</code>?</li>
+    </ol>
+
+    <h3>Vocabulário que ele cobra</h3>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Termo</th><th>Significado</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Estado</strong></td><td>Uma configuração do mundo — a posição <code>(2,3)</code>.</td></tr>
+          <tr><td><strong>Nó</strong></td><td>O estado <em>mais</em> a contabilidade da busca: quem é o pai, qual o custo, qual a profundidade. Estado ≠ nó.</td></tr>
+          <tr><td><strong>Fronteira</strong></td><td>Os nós já descobertos mas ainda não expandidos — a fila do BFS, a pilha do DFS, a fila de prioridade do A*.</td></tr>
+          <tr><td><strong>Expandir</strong></td><td>Tirar um nó da fronteira e gerar todos os seus sucessores.</td></tr>
+          <tr><td><strong>Visitados / explorados</strong></td><td>O conjunto de estados já expandidos. Existe para não andar em círculos.</td></tr>
+          <tr><td><strong>Tabela de pais</strong></td><td>O registro de “quem me descobriu?”. É por ela que se reconstrói o caminho depois de achar o objetivo.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <span class="tag">Ponto que ele repete</span>
+      <p>Nenhum algoritmo “devolve” o caminho durante a busca. Ele acha o objetivo e <strong>volta pela tabela de pais</strong>: <code>(4,6) ← (4,5) ← (4,4) ← …</code> até <code>(0,0)</code>, e então inverte. Se a questão pedir o caminho, mostre esse rastreamento reverso.</p>
+    </div>
+
+    <h3>Cego × informado</h3>
+    <p>A divisão central da matéria. A <strong>busca cega (não informada)</strong> não faz ideia de onde está o objetivo — só segue uma regra de expansão. A <strong>busca informada (heurística)</strong> tem uma estimativa de quão perto cada estado está do objetivo e usa isso para escolher.</p>
+    <ul>
+      <li><strong>Cega:</strong> BFS, DFS, e também Dijkstra (ele olha custo já gasto, não o objetivo).</li>
+      <li><strong>Informada:</strong> Gulosa e A*, porque usam <code>h(n)</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ BFS ============ -->
+<section id="bfs">
+  <h2><span class="num">Aula 07</span>BFS — busca em largura</h2>
+  <div class="prose">
+    <p><strong>Estrutura: fila (FIFO).</strong> Explora nível por nível — primeiro tudo que está a 1 passo, depois tudo a 2 passos, e assim por diante.</p>
+
+    <div class="callout">
+      <span class="tag">A frase da aula</span>
+      <p>“BFS explora por níveis.” E a consequência que cai em prova: <strong>é completo e ótimo em grafo não ponderado</strong> — se existe solução, ele acha, e o primeiro caminho encontrado é o de menor número de passos.</p>
+    </div>
+
+    <h3>O grafo de exemplo</h3>
+    <p>No grafo A–I dos slides, com A na raiz, B e C no nível 1, D/E/F/G no nível 2 e H/I no nível 3, a ordem de visita é:</p>
+    <div class="formula">A, B, C, D, E, F, G, H, I</div>
+    <p>Note que a ordem de visita do BFS é literalmente a leitura do grafo nível a nível. Se a prova der um grafo novo, desenhe os níveis antes de responder — resolve a questão em dez segundos.</p>
+
+    <h3>No labirinto</h3>
+    <p>Com a ordem cima → direita → baixo → esquerda, o BFS gasta <strong>17 iterações</strong> e chega ao objetivo em <code>(4,5) → (4,6)</code>. O caminho tem <strong>11 estados / 10 movimentos</strong>:</p>
+    <div class="formula">(0,0) → (0,1) → (0,2) → (1,2) → (2,2) → (2,3) → (2,4) → (3,4) → (4,4) → (4,5) → (4,6)</div>
+
+    <h3>Pseudocódigo</h3>
+<pre><b>Função</b> BFS(Grafo, nó_inicial):
+    criar uma fila F
+    criar um conjunto Visitados
+    adicionar nó_inicial a Visitados
+    enfileirar nó_inicial em F
+    <b>enquanto</b> F não estiver vazia:
+        nó_atual = desenfileirar de F      <i># sai o primeiro que entrou</i>
+        <b>se</b> nó_atual for o objetivo: retornar caminho
+        <b>para cada</b> vizinho de nó_atual:
+            <b>se</b> vizinho não está em Visitados:
+                adicionar vizinho a Visitados
+                registrar pai[vizinho] = nó_atual
+                enfileirar vizinho em F</pre>
+
+    <div class="callout warn">
+      <span class="tag">Pegadinha</span>
+      <p>Marque como visitado <strong>na hora de enfileirar</strong>, não na hora de desenfileirar. Se marcar só ao desenfileirar, o mesmo estado entra várias vezes na fila e a ordem de visita muda — é o erro mais comum ao traçar BFS à mão.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DFS ============ -->
+<section id="dfs">
+  <h2><span class="num">Aula 07</span>DFS — busca em profundidade</h2>
+  <div class="prose">
+    <p><strong>Estrutura: pilha (LIFO)</strong> — ou recursão, que usa a pilha de chamadas. Mergulha num caminho até o fim; quando trava, faz <em>backtracking</em> e tenta outro.</p>
+
+    <div class="callout">
+      <span class="tag">A frase da aula</span>
+      <p>“DFS aprofunda o máximo possível.” Consequência: <strong>não garante o menor caminho</strong>, e pode demorar muito se a solução estiver muito fundo.</p>
+    </div>
+
+    <h3>A inversão da ordem — isso cai</h3>
+    <p>Como a pilha devolve o último que entrou, para <em>explorar</em> na ordem cima → direita → baixo → esquerda é preciso <strong>empilhar na ordem inversa</strong>: esquerda → baixo → direita → cima. O professor destaca isso em vários slides.</p>
+    <div class="formula">explora: ↑ → ↓ ←     empilha: ← ↓ → ↑</div>
+
+    <h3>No grafo de exemplo</h3>
+    <div class="formula">A, B, D, H, E, C, F, I, G</div>
+    <p>Compare com o BFS no mesmo grafo (A, B, C, D, E, F, G, H, I): o DFS abandona o nível 1 pela metade — vai de B direto para D e H, no fundo, antes de sequer olhar para C.</p>
+
+    <h3>No labirinto</h3>
+    <p>O DFS sobe pelo lado direito e chega ao objetivo por <code>(3,6) → (4,6)</code>. O caminho tem <strong>15 estados / 14 movimentos</strong> — quatro a mais que o BFS:</p>
+    <div class="formula">(0,0) → (0,1) → (0,2) → (1,2) → (2,2) → (2,3) → (2,4) → (1,4) → (0,4) → (0,5) → (0,6) → (1,6) → (2,6) → (3,6) → (4,6)</div>
+    <p>E repare no detalhe que o slide marca: o estado <code>(2,1)</code> entra na pilha logo no começo e <strong>fica lá esperando até o fim</strong>, porque o DFS sempre pega o topo. Numa pergunta do tipo “o que acontece com o nó X?”, a resposta é essa.</p>
+
+    <h3>Pseudocódigo</h3>
+<pre>DFS(início):
+    criar pilha P
+    colocar início em P
+    <b>enquanto</b> P não estiver vazia:
+        atual = retirar o topo de P     <i># sai o último que entrou</i>
+        <b>se</b> atual for o objetivo: retornar solução
+        <b>se</b> atual já foi visitado: continuar
+        marcar atual como visitado
+        <b>para cada</b> vizinho (na ordem inversa):
+            <b>se</b> não foi visitado:
+                pai[vizinho] = atual
+                colocar vizinho em P</pre>
+  </div>
+</section>
+
+<!-- ============ DIJKSTRA ============ -->
+<section id="dijkstra">
+  <h2><span class="num">Aula 08 · custo</span>Dijkstra — busca por custo uniforme</h2>
+  <div class="prose">
+    <p>Aqui as arestas passam a ter <strong>peso</strong>. Menor número de passos deixa de ser o mesmo que menor custo.</p>
+    <div class="formula">f(n) = g(n)     — só o custo acumulado desde o início</div>
+
+    <h3>Os três passos do algoritmo</h3>
+    <ol>
+      <li><strong>Inicialização:</strong> distância da origem = 0, todas as outras = ∞, todos não visitados.</li>
+      <li><strong>Escolha:</strong> entre os não visitados, pegue o de <strong>menor distância atual</strong> — chame de <code>u</code> — e marque como visitado.</li>
+      <li><strong>Relaxamento:</strong> para cada vizinho <code>v</code> não visitado, calcule <code>dist(u) + peso(u,v)</code>. Se der menos que a distância registrada em <code>v</code>, <strong>atualize a distância e o pai</strong>.</li>
+    </ol>
+
+    <h3>O grafo A–E dos slides</h3>
+    <p>Arestas: A–B = 5, A–C = 4, C–B = 6, C–D = 2, B–D = 3, C–E = 4, D–E = 5. Partindo de A, a tabela fecha assim:</p>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Vértice</th><th class="num">Distância</th><th>Pai</th><th>Como chegou lá</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td class="num">0</td><td>—</td><td>origem</td></tr>
+          <tr><td>B</td><td class="num">5</td><td>A</td><td>direto (via C daria 4+6 = 10, pior)</td></tr>
+          <tr><td>C</td><td class="num">4</td><td>A</td><td>direto</td></tr>
+          <tr><td>D</td><td class="num">6</td><td>C</td><td>4+2 (via B daria 5+3 = 8, pior)</td></tr>
+          <tr><td>E</td><td class="num">8</td><td>C</td><td>4+4 (via D daria 6+5 = 11, pior)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Ou seja: <strong>A → D</strong> custa 6 pelo caminho A→C→D, e <strong>A → E</strong> custa 8 pelo caminho A→C→E.</p>
+
+    <div class="callout warn">
+      <span class="tag">Erro no slide</span>
+      <p>O slide 8 diz “para chegar de A → E o menor caminho é A → C → D, 4 + 2 = 6”. Esse 6 é a distância até <strong>D</strong>, não até E. Até E são 8, por A → C → E. Se cair essa questão, é a tabela que vale.</p>
+    </div>
+
+    <h3>No labirinto com lama</h3>
+    <p>A variante da aula põe células de <strong>lama custando 2</strong> em vez de 1. No simulador, a lama está na descida final — <code>(3,4)</code>, <code>(4,4)</code> e <code>(4,5)</code>, hachuradas em âmbar. O resultado é instrutivo:</p>
+    <ul>
+      <li>Caminho de baixo (o do BFS): 10 movimentos, mas 3 deles na lama → custo <strong>13</strong>.</li>
+      <li>Caminho da direita (o do DFS): 14 movimentos, todos limpos → custo <strong>14</strong>.</li>
+    </ul>
+    <p>O Dijkstra ainda escolhe o de baixo, por <strong>uma unidade</strong>. Mas se a lama custasse 3, o de baixo iria a 16 e o caminho <em>mais longo</em> passaria a ser o <em>mais barato</em>. É esse o ponto da aula: <strong>curto ≠ barato</strong>.</p>
+
+    <div class="callout">
+      <span class="tag">Relação com o BFS</span>
+      <p>Quando todas as arestas custam 1, Dijkstra e BFS produzem o mesmo resultado — o BFS é o caso particular do Dijkstra com custo uniforme. Boa frase para uma discursiva.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HEURÍSTICA ============ -->
+<section id="heuristica">
+  <h2><span class="num">Aula 08 · informada</span>Heurísticas</h2>
+  <div class="prose">
+    <p>Heurística é uma <strong>estimativa</strong> de quanto ainda falta do estado <code>n</code> até o objetivo. É o que transforma busca cega em busca informada.</p>
+
+    <h3>Distância de Manhattan</h3>
+    <div class="formula">h(n) = |x<sub>n</sub> − x<sub>g</sub>| + |y<sub>n</sub> − y<sub>g</sub>|</div>
+    <p>O nome vem da malha de ruas de Manhattan: não dá para atravessar o quarteirão na diagonal, é preciso andar pelas ruas. Soma o deslocamento horizontal com o vertical.</p>
+    <p>É a heurística <strong>certa para o nosso labirinto</strong>, porque só existem movimentos <code>↑ ↓ ← →</code> e cada um custa 1 — ela nunca superestima o caminho mínimo. Essa propriedade tem nome: heurística <strong>admissível</strong>, e é o que garante que o A* encontre o caminho ótimo.</p>
+
+    <h3>Distância euclidiana</h3>
+    <div class="formula">h(n) = √((x<sub>n</sub> − x<sub>g</sub>)² + (y<sub>n</sub> − y<sub>g</sub>)²)</div>
+    <p>A linha reta. Serve quando existe movimento diagonal.</p>
+
+    <h3>O exemplo comparativo</h3>
+    <p>Com A em <code>(0,0)</code> e G em <code>(2,3)</code>:</p>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Heurística</th><th>Conta</th><th class="num">h(A)</th><th>Leitura</th></tr></thead>
+        <tbody>
+          <tr><td>Manhattan</td><td>|0−2| + |0−3| = 2 + 3</td><td class="num">5</td><td>“Só andando na horizontal e vertical, preciso de pelo menos 5 movimentos.”</td></tr>
+          <tr><td>Euclidiana</td><td>√((0−2)² + (0−3)²) = √13</td><td class="num">3,61</td><td>“Se eu pudesse ir direto, seriam ~3,61 unidades.”</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>No nosso labirinto, <code>h(0,0) = |0−4| + |0−6| = 10</code> e <code>h(0,1) = 9</code> — é o valor que aparece no primeiro slide de rastreamento da gulosa. Ligue o botão <em>Mostrar h</em> no simulador para ver o campo inteiro.</p>
+  </div>
+</section>
+
+<!-- ============ GULOSA ============ -->
+<section id="gulosa">
+  <h2><span class="num">Aula 08 · informada</span>Busca gulosa (Greedy Best-First)</h2>
+  <div class="prose">
+    <div class="formula">f(n) = h(n)     — só a estimativa até o objetivo</div>
+    <p>Sempre expande o nó que <em>parece</em> mais perto do objetivo. <strong>Ignora completamente o custo já gasto</strong> para chegar até ali — e é exatamente essa a crítica que leva ao A*.</p>
+
+    <h3>O exercício do grafo</h3>
+    <p>Com <code>h(A)=15, h(B)=12, h(C)=10, h(D)=7, h(E)=11, h(G)=0</code>:</p>
+    <div class="scroller">
+      <table>
+        <thead><tr><th class="num">Passo</th><th>Estado atual</th><th>Candidatos na fronteira</th><th>Escolhido</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td>A</td><td>B (12), C (10)</td><td><strong>C</strong></td></tr>
+          <tr><td class="num">2</td><td>C</td><td>B (12), D (7), E (11)</td><td><strong>D</strong></td></tr>
+          <tr><td class="num">3</td><td>D</td><td>B (12), E (11), G (0)</td><td><strong>G</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="formula">Resposta: A → C → D → G</div>
+    <p>Repare no método: a cada passo você junta <em>toda</em> a fronteira (inclusive nós antigos que sobraram) e pega o menor h. Não é “o melhor filho do nó atual”.</p>
+
+    <div class="callout warn">
+      <span class="tag">O que a gulosa não garante</span>
+      <p>Ela não é ótima e nem sempre é completa. Pode entrar por um corredor que aponta para o objetivo e desembocar num beco, tendo gasto muito mais que o necessário. No nosso labirinto ela dá sorte e acha o mesmo caminho do BFS — mas isso é uma propriedade <em>deste</em> labirinto, não do algoritmo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ A* ============ -->
+<section id="astar">
+  <h2><span class="num">Aula 08 · informada</span>A* Search</h2>
+  <div class="prose">
+    <p>A síntese da matéria inteira: combina o que o Dijkstra tem de bom (custo real já percorrido) com o que a gulosa tem de bom (estimativa do que falta).</p>
+    <div class="formula">f(n) = g(n) + h(n)</div>
+    <ul>
+      <li><code>g(n)</code> — custo real do caminho do início até <code>n</code>.</li>
+      <li><code>h(n)</code> — estimativa de <code>n</code> até o objetivo.</li>
+      <li><code>f(n)</code> — estimativa do <strong>custo total</strong> de uma solução que passe por <code>n</code>.</li>
+    </ul>
+
+    <h3>Os seis passos</h3>
+    <ol>
+      <li>Calcula <code>g(n)</code>.</li>
+      <li>Calcula <code>h(n)</code>.</li>
+      <li>Soma <code>f(n) = g(n) + h(n)</code>.</li>
+      <li>Escolhe o nó de <strong>menor f(n)</strong> na fronteira.</li>
+      <li><strong>Atualiza custos e pais</strong> se descobrir um caminho melhor para um nó já conhecido.</li>
+      <li>Repete até chegar ao objetivo.</li>
+    </ol>
+
+    <div class="callout">
+      <span class="tag">O detalhe do passo 5</span>
+      <p>É o que distingue A* de gulosa numa prova. O A* mantém uma <strong>tabela de custos e pais que pode ser reescrita</strong> durante a execução: se aparecer um caminho mais barato para um nó já visto, o <code>g</code> e o pai dele mudam. A gulosa nunca faz isso, porque não acompanha custo nenhum.</p>
+    </div>
+
+    <h3>O exemplo do grafo</h3>
+    <p>Com A–B = 3, A–C = 4, e <code>h(A)=5, h(B)=6, h(C)=3</code>:</p>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Nó</th><th class="num">g(n)</th><th class="num">h(n)</th><th class="num">f(n) = g + h</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td class="num">0</td><td class="num">5</td><td class="num">0 + 5 = 5</td></tr>
+          <tr><td>B</td><td class="num">3</td><td class="num">6</td><td class="num">3 + 6 = 9</td></tr>
+          <tr><td>C</td><td class="num">4</td><td class="num">3</td><td class="num">4 + 3 = 7</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>B tem o menor <code>g</code> (3), mas C tem o menor <code>f</code> (7) — então <strong>C é expandido</strong>. Uma gulosa escolheria C também (h=3 &lt; h=6); um Dijkstra escolheria B (g=3 &lt; g=4). Esse é o exemplo perfeito para mostrar que os três critérios são distintos.</p>
+
+    <h3>No labirinto</h3>
+    <p>O A* encontra <strong>o mesmo caminho ótimo do BFS</strong> — mas expandindo bem menos nós, porque o <code>h</code> o impede de perder tempo com o lado esquerdo do mapa. No simulador: <strong>A* fecha em 13 iterações, o BFS em 17 e o Dijkstra em 24</strong>. A gulosa é a mais rápida de todas (10), só que sem nenhuma garantia — aqui ela acertou.</p>
+    <p>Essa é a melhor evidência visual da diferença entre cego e informado: o Dijkstra, sem heurística, se espalha para todos os lados a partir do início; o A*, com a mesma garantia de otimalidade, vai quase direto.</p>
+
+    <div class="callout">
+      <span class="tag">Propriedades para decorar</span>
+      <p>A* é <strong>completo</strong> e <strong>ótimo</strong>, desde que <code>h</code> seja <strong>admissível</strong> (nunca superestima o custo real até o objetivo). Se <code>h(n) = 0</code> para todo n, o A* <em>vira</em> Dijkstra. Se <code>g(n)</code> for ignorado, vira busca gulosa. Ele é literalmente a generalização dos dois.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMPARAÇÃO ============ -->
+<section id="comparacao">
+  <h2><span class="num">Aula 08 · fechamento</span>Tabela comparativa</h2>
+  <div class="prose">
+    <p>Se só der tempo de memorizar uma coisa da parte de buscas, memorize esta tabela.</p>
+  </div>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>Algoritmo</th><th>Critério</th><th>Estrutura</th><th>Informado?</th><th>Ótimo?</th><th>Neste labirinto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>BFS</strong></td><td class="num">nível / nº de passos</td><td>Fila (FIFO)</td><td>Não</td><td>Sim, se custo uniforme</td><td class="num">10 movimentos</td></tr>
+        <tr><td><strong>DFS</strong></td><td class="num">profundidade</td><td>Pilha (LIFO)</td><td>Não</td><td>Não</td><td class="num">14 movimentos</td></tr>
+        <tr><td><strong>Dijkstra</strong></td><td class="num">g(n)</td><td>Fila de prioridade</td><td>Não</td><td>Sim</td><td class="num">custo 13 (com lama)</td></tr>
+        <tr><td><strong>Gulosa</strong></td><td class="num">h(n)</td><td>Fila de prioridade</td><td>Sim</td><td>Não</td><td class="num">10 movimentos</td></tr>
+        <tr><td><strong>A*</strong></td><td class="num">f(n) = g(n) + h(n)</td><td>Fila de prioridade</td><td>Sim</td><td>Sim, se h admissível</td><td class="num">10 movimentos, 13 iterações</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="prose">
+    <h3>As cinco frases do professor</h3>
+    <ul>
+      <li><strong>BFS</strong> — “Explora por níveis.”</li>
+      <li><strong>DFS</strong> — “Aprofunda o máximo possível.”</li>
+      <li><strong>Gulosa</strong> — “Vai para onde parece estar mais perto.”</li>
+      <li><strong>Dijkstra</strong> — “Vai pelo caminho de menor custo acumulado.”</li>
+      <li><strong>A*</strong> — “Combina o custo percorrido com a estimativa até o objetivo.”</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ CÓDIGO ============ -->
+<section id="codigo">
+  <h2><span class="num">Prática</span>Código Python</h2>
+  <div class="prose">
+    <p>A parte de código tem duas origens: os algoritmos de busca e o agente do repositório do professor. Comece pela base compartilhada.</p>
+
+    <h3>Base: o labirinto e os vizinhos</h3>
+<pre><b>from</b> collections <b>import</b> deque
+<b>import</b> heapq
+
+LABIRINTO = [
+    "S..#...",
+    "##.#.#.",
+    ".....#.",
+    ".###.#.",
+    "......G",
+]
+LINHAS, COLUNAS = len(LABIRINTO), len(LABIRINTO[0])
+INICIO, OBJETIVO = (0, 0), (4, 6)
+
+<i># a ordem da aula: cima -> direita -> baixo -> esquerda</i>
+MOVIMENTOS = [(-1, 0), (0, 1), (1, 0), (0, -1)]
+
+
+<b>def</b> vizinhos(estado):
+    linha, coluna = estado
+    <b>for</b> dl, dc <b>in</b> MOVIMENTOS:
+        nl, nc = linha + dl, coluna + dc
+        <b>if</b> 0 &lt;= nl &lt; LINHAS <b>and</b> 0 &lt;= nc &lt; COLUNAS <b>and</b> LABIRINTO[nl][nc] != "#":
+            <b>yield</b> (nl, nc)
+
+
+<b>def</b> reconstruir(pais, estado):
+    <i>"""Volta pela tabela de pais e inverte -- o passo final de todos eles."""</i>
+    caminho = [estado]
+    <b>while</b> pais[estado] <b>is not</b> None:
+        estado = pais[estado]
+        caminho.append(estado)
+    caminho.reverse()
+    <b>return</b> caminho</pre>
+
+    <h3>BFS e DFS — a única diferença é a estrutura</h3>
+<pre><b>def</b> bfs():
+    fila = deque([INICIO])
+    visitados = {INICIO}
+    pais = {INICIO: None}
+
+    <b>while</b> fila:
+        atual = fila.popleft()            <i># FIFO: sai o primeiro que entrou</i>
+        <b>if</b> atual == OBJETIVO:
+            <b>return</b> reconstruir(pais, atual)
+        <b>for</b> vizinho <b>in</b> vizinhos(atual):
+            <b>if</b> vizinho <b>not in</b> visitados:
+                visitados.add(vizinho)    <i># marca ao ENFILEIRAR</i>
+                pais[vizinho] = atual
+                fila.append(vizinho)
+    <b>return</b> None
+
+
+<b>def</b> dfs():
+    pilha = [INICIO]
+    visitados = set()
+    pais = {INICIO: None}
+
+    <b>while</b> pilha:
+        atual = pilha.pop()               <i># LIFO: sai o último que entrou</i>
+        <b>if</b> atual == OBJETIVO:
+            <b>return</b> reconstruir(pais, atual)
+        <b>if</b> atual <b>in</b> visitados:
+            <b>continue</b>
+        visitados.add(atual)
+        <i># empilha invertido para desempilhar na ordem da aula</i>
+        <b>for</b> vizinho <b>in</b> reversed(list(vizinhos(atual))):
+            <b>if</b> vizinho <b>not in</b> visitados:
+                pais[vizinho] = atual
+                pilha.append(vizinho)
+    <b>return</b> None</pre>
+
+    <h3>Dijkstra — custo acumulado com relaxamento</h3>
+<pre>LAMA = {(3, 4), (4, 4), (4, 5)}       <i># entrar nessas células custa 2</i>
+
+
+<b>def</b> custo(estado):
+    <b>return</b> 2 <b>if</b> estado <b>in</b> LAMA <b>else</b> 1
+
+
+<b>def</b> dijkstra():
+    distancias = {INICIO: 0}
+    pais = {INICIO: None}
+    fila = [(0, INICIO)]                  <i># fila de prioridade pelo menor g(n)</i>
+    fechados = set()
+
+    <b>while</b> fila:
+        g, atual = heapq.heappop(fila)
+        <b>if</b> atual <b>in</b> fechados:
+            <b>continue</b>
+        fechados.add(atual)
+        <b>if</b> atual == OBJETIVO:
+            <b>return</b> reconstruir(pais, atual), g
+        <b>for</b> vizinho <b>in</b> vizinhos(atual):
+            novo = g + custo(vizinho)              <i># relaxamento da aresta</i>
+            <b>if</b> novo &lt; distancias.get(vizinho, float("inf")):
+                distancias[vizinho] = novo
+                pais[vizinho] = atual
+                heapq.heappush(fila, (novo, vizinho))
+    <b>return</b> None, float("inf")</pre>
+
+    <h3>Gulosa e A* — a heurística entra aqui</h3>
+<pre><b>def</b> manhattan(estado):
+    <b>return</b> abs(estado[0] - OBJETIVO[0]) + abs(estado[1] - OBJETIVO[1])
+
+
+<b>def</b> gulosa():
+    fila = [(manhattan(INICIO), INICIO)]  <i># ordena SÓ por h(n)</i>
+    pais = {INICIO: None}
+    visitados = set()
+
+    <b>while</b> fila:
+        _, atual = heapq.heappop(fila)
+        <b>if</b> atual == OBJETIVO:
+            <b>return</b> reconstruir(pais, atual)
+        <b>if</b> atual <b>in</b> visitados:
+            <b>continue</b>
+        visitados.add(atual)
+        <b>for</b> vizinho <b>in</b> vizinhos(atual):
+            <b>if</b> vizinho <b>not in</b> visitados:
+                pais[vizinho] = atual
+                heapq.heappush(fila, (manhattan(vizinho), vizinho))
+    <b>return</b> None
+
+
+<b>def</b> a_estrela():
+    g = {INICIO: 0}
+    pais = {INICIO: None}
+    fila = [(manhattan(INICIO), INICIO)]  <i># ordena por f(n) = g(n) + h(n)</i>
+    fechados = set()
+
+    <b>while</b> fila:
+        _, atual = heapq.heappop(fila)
+        <b>if</b> atual <b>in</b> fechados:
+            <b>continue</b>
+        fechados.add(atual)
+        <b>if</b> atual == OBJETIVO:
+            <b>return</b> reconstruir(pais, atual), g[atual]
+        <b>for</b> vizinho <b>in</b> vizinhos(atual):
+            novo_g = g[atual] + custo(vizinho)
+            <b>if</b> novo_g &lt; g.get(vizinho, float("inf")):   <i># achou caminho melhor</i>
+                g[vizinho] = novo_g                     <i># atualiza custo E pai</i>
+                pais[vizinho] = atual
+                heapq.heappush(fila, (novo_g + manhattan(vizinho), vizinho))
+    <b>return</b> None, float("inf")</pre>
+
+    <div class="callout">
+      <span class="tag">Leitura comparada</span>
+      <p>Os cinco são o <em>mesmo</em> laço. O que muda é uma linha: <code>popleft()</code> (BFS), <code>pop()</code> (DFS), ou a chave da fila de prioridade — <code>g</code> (Dijkstra), <code>h</code> (gulosa), <code>g + h</code> (A*). Se a prova pedir “transforme este BFS em A*”, é isso que ela está testando.</p>
+    </div>
+
+    <h3>O agente do repositório</h3>
+    <p>Do <code>agente_python</code> do professor — a ideia central é que o <strong>canal</strong> (Telegram, e-mail) e a <strong>inteligência</strong> são coisas separadas. Os dois bots importam a mesma função:</p>
+<pre><i># agent_core.py -- o "cérebro"</i>
+client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+
+SYSTEM_PROMPT = (
+    "Você é um assistente educacional simpático, direto e objetivo. "
+    "Responda em português, de forma clara, sem enrolação."
+)
+
+
+<b>def</b> perguntar_para_ia(pergunta, historico=None):
+    contents = _converter_historico(historico <b>or</b> [])
+    contents.append(types.Content(role="user", parts=[types.Part(text=pergunta)]))
+    resposta = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=contents,
+        config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT),
+    )
+    <b>return</b> resposta.text</pre>
+    <p>O <code>telegram_bot.py</code> usa <strong>long polling</strong> (<code>getUpdates</code> em laço, sem precisar de servidor web — em produção o certo seriam <em>webhooks</em>) e guarda o histórico num dicionário <code>chat_id → mensagens</code>, que é a <strong>memória de curto prazo</strong> e <strong>some ao reiniciar</strong>. O <code>email_bot.py</code> usa só biblioteca nativa: <code>imaplib</code> para ler os não lidos (<code>UNSEEN</code>) e <code>smtplib</code> para responder.</p>
+    <p>Possíveis perguntas de prova: por que a chave de API fica em variável de ambiente e não no código? Por que long polling em vez de webhook numa aula? Onde exatamente está a memória do agente, e qual a limitação dela?</p>
+  </div>
+</section>
+
+<!-- ============ AGENTES ============ -->
+<section id="agentes">
+  <h2><span class="num">Aula 04</span>Agentes inteligentes</h2>
+  <div class="prose">
+    <p><strong>Definição:</strong> um agente de IA é um sistema de software autônomo que <em>percebe</em> seu ambiente, <em>toma decisões</em> e <em>executa ações</em> para atingir uma meta, sem intervenção humana constante.</p>
+
+    <h3>As quatro características</h3>
+    <ul>
+      <li><strong>Autonomia</strong> — decide e age por conta própria dentro dos seus parâmetros.</li>
+      <li><strong>Percepção</strong> — coleta informações do ambiente.</li>
+      <li><strong>Raciocínio / decisão</strong> — processa e escolhe a ação mais adequada.</li>
+      <li><strong>Aprendizado</strong> — melhora o desempenho com base na experiência.</li>
+    </ul>
+
+    <h3>Estrutura e ciclo</h3>
+    <div class="formula">sensores → função do agente (o "cérebro") → atuadores</div>
+    <p>O ciclo fecha: o agente <strong>percebe</strong> pelos sensores, a função do agente <strong>decide</strong>, os atuadores <strong>agem</strong> e modificam o ambiente — que é percebido de novo. <em>Perceber → pensar → agir → (aprender)</em>.</p>
+
+    <h3>PEAS</h3>
+    <p>Framework para especificar o ambiente de tarefa de um agente. Decore pelo carro autônomo:</p>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Letra</th><th>Significado</th><th>Carro autônomo</th></tr></thead>
+        <tbody>
+          <tr><td><strong>P</strong></td><td>Performance (desempenho)</td><td>segurança, rapidez, conforto</td></tr>
+          <tr><td><strong>E</strong></td><td>Environment (ambiente)</td><td>ruas, trânsito, pedestres</td></tr>
+          <tr><td><strong>A</strong></td><td>Actuators (atuadores)</td><td>volante, freio, acelerador</td></tr>
+          <tr><td><strong>S</strong></td><td>Sensors (sensores)</td><td>câmeras, GPS, radar</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Os cinco tipos de agente</h3>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Tipo</th><th>Como decide</th><th>Exemplo da aula</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Reativo simples</strong></td><td>Só a percepção atual, regras se…então. Ignora o histórico.</td><td>Termostato: se T &lt; 20°, ligue o aquecedor.</td></tr>
+          <tr><td><strong>Reativo com modelo</strong></td><td>Mantém um modelo interno do mundo para as partes não observáveis.</td><td>Carro que perde o GPS no túnel e estima a posição pelo último estado conhecido.</td></tr>
+          <tr><td><strong>Baseado em objetivos</strong></td><td>Considera a meta a atingir — envolve planejamento.</td><td>Sistema de cálculo de rota.</td></tr>
+          <tr><td><strong>Baseado em utilidade</strong></td><td>Múltiplos objetivos ou incerteza: maximiza a utilidade.</td><td>Aspirador que quer limpar, mas rápido e gastando pouca energia — escolhe entre rotas de 10, 12 (com tapete) e 15 min.</td></tr>
+          <tr><td><strong>De aprendizado</strong></td><td>Qualquer um dos anteriores + mecanismo de melhoria contínua.</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <span class="tag">Racionalidade</span>
+      <p>Agente racional é o que faz <strong>a melhor coisa que pode com base no que ele sabe</strong> — e não com base na verdade absoluta do ambiente. Ligada a isso: <strong>onisciência</strong> (conhecimento total do ambiente e do resultado das ações) é um conceito <em>teórico</em>; um agente onisciente não precisaria aprender.</p>
+    </div>
+
+    <h3>Agente × chatbot</h3>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Chatbot</th><th>Agente</th></tr></thead>
+        <tbody>
+          <tr><td>Recebe uma entrada</td><td>Recebe uma tarefa</td></tr>
+          <tr><td>Gera resposta</td><td>Planeja ações</td></tr>
+          <tr><td>Normalmente só responde</td><td>Pode executar ações</td></tr>
+          <tr><td>Pode não ter ferramentas</td><td>Usa ferramentas</td></tr>
+          <tr><td>Pode não manter estado</td><td>Pode ter memória</td></tr>
+          <tr><td>Uma interação</td><td>Várias etapas</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Ressalva que ele faz questão de dizer: <strong>a fronteira não é absoluta</strong>. “Agente” descreve o comportamento do sistema, não é uma categoria estanque.</p>
+
+    <h3>Memória, ferramentas, multiagentes</h3>
+    <ul>
+      <li><strong>Curto prazo</strong> — ligada à tarefa atual. Lembrar que a conversa é sobre hotéis em Porto Alegre para o “até R$ 500” fazer sentido.</li>
+      <li><strong>Longo prazo</strong> — histórico entre conversas. Lembrar que o usuário prefere hotéis no centro. “É como se conhecesse o usuário.”</li>
+      <li><strong>Ferramentas</strong> — calculadora, busca web, banco, API de clima, e-mail, calendário. O agente chama <code>weather_api()</code>, recebe, interpreta e responde.</li>
+      <li><strong>Multiagentes</strong> — coordenador, pesquisador, programador, testador. A pergunta do slide (“não seria melhor um só fazer tudo?”) tem resposta: especialização, prompts e ferramentas mais focados, e paralelismo.</li>
+    </ul>
+
+    <h3>MCP — Model Context Protocol</h3>
+    <p>Protocolo aberto criado pela <strong>Anthropic</strong>, funcionando como conector universal entre LLMs/agentes e sistemas externos. Antes dele, cada agente precisava de um conector customizado para cada serviço.</p>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Pilar</th><th>O que é</th><th>Exemplo</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Resources</strong></td><td>Dados passivos de leitura expostos ao modelo (como um GET).</td><td>Esquema do banco, conteúdo de um <code>.log</code>.</td></tr>
+          <tr><td><strong>Tools</strong></td><td>Funções executáveis que o agente pode chamar.</td><td><code>execute_sql_query()</code>, <code>create_github_issue()</code>.</td></tr>
+          <tr><td><strong>Prompts</strong></td><td>Templates de instrução fornecidos pelo servidor.</td><td>“Como analisar um log de erro do PostgreSQL”.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Vantagens: <strong>desacoplamento</strong> (o servidor é escrito uma vez e serve qualquer agente — sai do N×M para N+M), <strong>segurança</strong> (processo isolado, controle de quais ferramentas o agente pode usar, aprovação humana antes de ação destrutiva como <code>DROP TABLE</code>) e <strong>transporte flexível</strong> (stdio local ou SSE/HTTP em rede).</p>
+
+    <h3>n8n — a prática da aula 05</h3>
+    <p>Plataforma de automação de workflows. Os quatro verbos: <strong>conectar, automatizar, orquestrar, criar agentes</strong>. O ponto didático: você não programa só o que o sistema faz — define <em>quais ferramentas ele pode usar</em> e deixa a IA decidir quando usá-las.</p>
+    <ul>
+      <li><strong>Gatilho</strong> — o evento que inicia o fluxo (Gmail: novo e-mail; Telegram: <em>On message</em>).</li>
+      <li><strong>Nó AI Agent</strong> — precisa de <em>Source for prompt</em> (Define below), <em>Prompt</em> (o texto da mensagem) e <em>System message</em> (o papel do agente).</li>
+      <li><strong>Chat Model</strong> — obrigatório, é o cérebro. Na aula, Gemini com chave do Google AI Studio.</li>
+      <li><strong>Memory</strong> — opcional, indexada pela thread do e-mail ou pelo chat ID do Telegram.</li>
+      <li><strong>Tools</strong> — opcional, e podem ser <strong>outros agentes</strong> (o agente financeiro com Google Sheets Tool).</li>
+      <li>No fluxo do Telegram: um <code>Switch</code> separa texto (<em>exists</em>) de áudio (<em>is not empty</em>); o áudio é baixado e transcrito pelo Gemini; os dois ramos convergem num <code>Edit Fields</code> normalizando tudo em <code>mensagemChat</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ FUNDAMENTOS ============ -->
+<section id="fundamentos">
+  <h2><span class="num">Aula 02</span>Fundamentos</h2>
+  <div class="prose">
+    <h3>IA simbólica × IA baseada em dados</h3>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>IA simbólica</th><th>IA baseada em dados</th></tr></thead>
+        <tbody>
+          <tr><td>Regras criadas por especialistas</td><td>Aprende a partir dos dados</td></tr>
+          <tr><td>Baseada em lógica</td><td>Baseada em aprendizado</td></tr>
+          <tr><td>Predominou nas décadas de 70 e 80</td><td>Predomina atualmente</td></tr>
+          <tr><td>Fácil explicar decisões</td><td>Alta capacidade de generalização</td></tr>
+          <tr><td>Pouca adaptação; difícil escalar</td><td>Aprende novos padrões; precisa de muito dado de qualidade</td></tr>
+          <tr><td>SHRDLU, XCON, Prolog</td><td>Perceptron, backpropagation, AlexNet, GPT-3</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>A simbólica é <strong>explicável</strong> mas não escala (as regras são codificadas à mão); a baseada em dados é uma <strong>caixa-preta</strong> mas lida com imagem e linguagem natural. <strong>Tendência atual: sistemas híbridos (neurossimbólicos)</strong>, juntando o poder estatístico com a interpretabilidade da lógica.</p>
+
+    <div class="callout">
+      <span class="tag">A distinção fina que ele cobra</span>
+      <p>Se os dois são “baseados em regras”, o que diferencia IA simbólica de um sistema tradicional? Sistema tradicional <strong>automatiza processos</strong> com regras de negócio (“calcular imposto”, “emitir boleto”). IA simbólica <strong>automatiza raciocínio</strong> com regras de conhecimento (“diagnosticar doenças”, “escolher a melhor ação”):<br><code>SE febre E tosse E raio-X com infiltrado ENTÃO suspeita = pneumonia</code></p>
+    </div>
+
+    <h3>As quatro abordagens (Russell &amp; Norvig)</h3>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Abordagem</th><th>Do que trata</th><th>Autores citados</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Pensando como humanos</strong></td><td>Ciência cognitiva, modelos computacionais da mente, experimentos de psicologia/biologia</td><td>Haugeland (1985), Bellman (1978)</td></tr>
+          <tr><td><strong>Pensando racionalmente</strong></td><td>Lógica e silogismo — “Sócrates é homem; todos os homens são mortais; logo Sócrates é mortal”</td><td>Charniak &amp; McDermott (1985), Winston (1992)</td></tr>
+          <tr><td><strong>Agindo como humanos</strong></td><td>Teste de Turing, PLN, representação de conhecimento, aprendizado de máquina</td><td>Kurzweil (1990), Rich &amp; Knight (1991)</td></tr>
+          <tr><td><strong>Agindo racionalmente</strong></td><td><strong>Agentes</strong> e sistemas multiagentes — é a abordagem que sustenta o resto do curso</td><td>Poole et al. (1998)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Teste de Turing</h3>
+    <p>Um interrogador humano conversa em linguagem natural com um humano e com uma máquina, sem saber qual é qual. Se não conseguir distinguir com segurança, diz-se que a máquina passou no teste.</p>
+
+    <h3>IA fraca, ampla e forte</h3>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Critério</th><th>IA fraca</th><th>IA forte</th></tr></thead>
+        <tbody>
+          <tr><td>Amplitude</td><td>Um domínio específico</td><td>Qualquer domínio</td></tr>
+          <tr><td>Aprendizado</td><td>Só dentro do escopo treinado</td><td>Aprende tarefas novas sozinha</td></tr>
+          <tr><td>Flexibilidade</td><td>Precisa ser retreinada</td><td>Adapta-se sozinha a novos contextos</td></tr>
+          <tr><td>Transferência</td><td>Não transfere entre áreas</td><td>Transfere conhecimento entre áreas</td></tr>
+          <tr><td>Compreensão</td><td>Segue padrões, sem “entendimento” real</td><td>Raciocina de modo semelhante a um humano</td></tr>
+          <tr><td>Exemplos</td><td>Alexa, filtro de spam do Gmail, recomendador da Netflix</td><td>Ainda não existe</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>IA ampla</strong> fica no meio: várias tarefas, mas dentro de um conjunto restrito de domínios. A imagem da aula é o <strong>canivete suíço</strong> — faz muita coisa, dentro de um kit limitado. Exemplo: um sistema de saúde que interpreta exames, gera relatórios, tira dúvidas sobre medicamentos e agenda consultas — tudo no “mundo” da saúde.</p>
+
+    <h3>Requisitos de um sistema inteligente</h3>
+    <p>Percepção, raciocínio, aprendizado, comunicação, ação e planejamento. “Deve ser capaz de adaptar-se a novas situações, raciocinar, entender relações entre fatos, descobrir significados, reconhecer a verdade e aprender com base em sua experiência.”</p>
+  </div>
+</section>
+
+<!-- ============ RISCOS ============ -->
+<section id="riscos">
+  <h2><span class="num">Aula 03</span>Riscos, limites e uso responsável</h2>
+  <div class="prose">
+    <h3>Viés em algoritmos</h3>
+    <p>A IA aprende com os dados que recebe; se os dados têm problema, o problema vira base de aprendizado. <strong>A IA não nasce preconceituosa — ela aprende padrões que os dados já trazem.</strong> Exemplos: reconhecimento facial que funciona pior para certos grupos, algoritmo de contratação que favorece um perfil, recomendação que cria bolhas. O exercício da aula: uma tabela onde todos os contratados são homens de faculdade federal — a IA treinada nela vai reproduzir isso.</p>
+
+    <h3>Deepfakes</h3>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Caso</th><th>Ano</th><th>O que ilustra</th></tr></thead>
+        <tbody>
+          <tr><td>Elis Regina (Volkswagen)</td><td>2023</td><td>Uso comercial autorizado — nem todo deepfake é fraude</td></tr>
+          <tr><td>Zelensky pedindo rendição</td><td>2022</td><td>Desinformação em tempo de guerra; desmentido em horas, mas já espalhado</td></tr>
+          <tr><td>Taylor Swift</td><td>2024</td><td>Imagens íntimas não consensuais; motivou a legislação (Lei DEFIANCE, EUA)</td></tr>
+          <tr><td>Tom Hanks / plano odontológico</td><td>2023</td><td>Endosso não autorizado; debate sobre direito de imagem</td></tr>
+          <tr><td>MrBeast no TikTok</td><td>2023</td><td>Era <em>anúncio pago</em> — responsabilidade da plataforma que lucra com a fraude</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Como identificar:</strong> pele lisa demais e bordas estranhas entre rosto e cabelo; olhos (piscar incomum, reflexos diferentes em cada olho, olhar vazio); sincronia entre boca e voz; <strong>mãos</strong> (número de dedos, deformações, posições impossíveis); texto dentro da imagem (placas ilegíveis, letras embaralhadas); iluminação e sombras inconsistentes. E o critério que não é visual: <strong>coerência de contexto</strong> — essa pessoa realmente faria essa declaração? Apareceu em fonte confiável? Outros veículos divulgaram?</p>
+
+    <h3>Mercado de trabalho</h3>
+    <p>O argumento histórico da aula: revolução industrial, computadores nos anos 80, internet — em todos, empregos sumiram e áreas novas nasceram. A tese: <strong>a tecnologia normalmente elimina tarefas, não profissões inteiras.</strong> A IA não substitui atividade manual; substitui <em>tarefas cognitivas</em>, e ainda assim costuma precisar de revisão.</p>
+    <ul>
+      <li><strong>Mais suscetíveis:</strong> telemarketing, entrada de dados, tradução simples, textos básicos, suporte básico — tarefas repetitivas.</li>
+      <li><strong>Menos suscetíveis:</strong> psicólogos, enfermeiros, eletricistas, pesquisadores, gestores — exigem criatividade, empatia, julgamento e negociação.</li>
+      <li><strong>Competências valorizadas:</strong> pensamento crítico, engenharia de prompts, validação das respostas da IA, interpretação de resultados.</li>
+      <li><strong>Profissões novas:</strong> engenheiro de IA, auditor de IA, especialista em ética em IA, curador de dados, especialista em segurança para IA.</li>
+    </ul>
+    <p>Conclusão dele: “profissionais que aprendem a trabalhar com IA tendem a ter vantagem sobre aqueles que ignoram essa tecnologia”.</p>
+
+    <h3>Direitos autorais</h3>
+    <ul>
+      <li><strong>Pelo sim:</strong> a IA não armazena cópia, só aprende padrões — equivaleria a ler milhares de livros. Nos EUA, <em>fair use</em>.</li>
+      <li><strong>Pelo não:</strong> as obras foram usadas sem autorização e há lucro em cima delas; deveria haver licença ou remuneração.</li>
+      <li><strong>NYT × OpenAI</strong> (2023): jornal alega prejuízo bilionário; OpenAI se defende com uso justo e diz que a reprodução literal só ocorre em casos raros com manipulação de prompt.</li>
+      <li><strong>Getty × Stability AI:</strong> mais de 12 milhões de fotos sem licença; a marca d'água da Getty aparecendo nas imagens geradas.</li>
+      <li><strong>Obra gerada por IA:</strong> sem contribuição criativa humana suficiente, em muitos países <strong>não recebe proteção autoral</strong> — a lógica é que o direito autoral existe para proteger a criatividade humana. O prompt pode ser protegido; o resultado dele, não.</li>
+      <li><strong>No Brasil:</strong> legislação sólida de propriedade intelectual; e em 2026 o STJ decidiu que relatório produzido exclusivamente por IA, sem validação técnica adequada, não serve como prova em processo penal.</li>
+    </ul>
+
+    <h3>Alucinações — provavelmente a questão discursiva</h3>
+    <p><strong>Definição:</strong> quando o modelo gera informação falsa com grande confiança, como se fosse verdadeira.</p>
+    <p><strong>Por que acontece:</strong> o modelo não guarda dados e consulta como um banco de dados. Ele responde seguindo “dado este contexto, qual a palavra mais provável agora?”. Com “o céu num dia sem nuvens é…”, a distribuição é clara: <em>azul</em> 95%. Mas com “o inventor brasileiro da internet foi…”, a informação não existe — a distribuição fica achatada (José 18%, Carlos 16%, Marcos 14%…), ele escolhe uma e, a partir daí, <strong>precisa manter a coerência da escolha errada</strong>. É o <em>efeito bola de neve</em>: “o cachorro perseguiu o avião” leva a “…que estava muito baixo durante a apresentação aérea”. Tudo parece verdadeiro porque é coerente.</p>
+    <p><strong>O que melhorou:</strong></p>
+    <ul>
+      <li>Dados de treinamento maiores e mais limpos.</li>
+      <li><strong>RLHF</strong> (aprendizado por reforço com feedback humano) e alinhamento pós-treino: o modelo aprende que é melhor dizer “não sei”, pedir mais contexto, admitir incerteza.</li>
+      <li><strong>RAG</strong> (Retrieval-Augmented Generation): consulta documentos externos antes de responder — em vez de responder o artigo 121 do Código Penal pelos pesos, busca a legislação.</li>
+      <li>Ferramentas: pesquisar na web, consultar banco, ler PDF, chamar API.</li>
+    </ul>
+    <p><strong>Onde ainda falha:</strong> perguntas muito específicas, eventos recentes, <strong>referências bibliográficas</strong>, estatísticas exatas, programação muito específica.</p>
+
+    <div class="callout">
+      <span class="tag">Uso responsável — as quatro regras</span>
+      <p>Não confiar cegamente nas respostas. Cuidado ao enviar informação sensível (pode ser armazenada conforme a política da plataforma). A IA não “quer” discriminar, mas reproduz preconceitos dos dados. E a que fecha a aula: <strong>quem responde pela resposta da IA é o humano que a usou.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HISTÓRICO ============ -->
+<section id="historico">
+  <h2><span class="num">Aula 01</span>Histórico</h2>
+  <div class="prose">
+    <p>Se cair, cai como “associe o ano ao marco”. Os que mais aparecem em prova estão em negrito.</p>
+    <div class="scroller">
+      <table>
+        <thead><tr><th class="num">Ano</th><th>Marco</th></tr></thead>
+        <tbody>
+          <tr><td class="num"><strong>1950</strong></td><td><strong>Turing</strong> publica “Computing Machinery and Intelligence” e propõe o <strong>Teste de Turing</strong></td></tr>
+          <tr><td class="num"><strong>1956</strong></td><td><strong>Conferência de Dartmouth</strong> — nasce o termo “Inteligência Artificial” (John McCarthy)</td></tr>
+          <tr><td class="num">1957</td><td><strong>Perceptron</strong> (Frank Rosenblatt), primeiro modelo de rede neural simples</td></tr>
+          <tr><td class="num">1966–72</td><td><strong>ELIZA</strong> (chatbot) e <strong>SHRDLU</strong> (blocos em linguagem natural)</td></tr>
+          <tr><td class="num">1970</td><td>Primeiro <strong>inverno da IA</strong>, por falta de avanços práticos</td></tr>
+          <tr><td class="num">1980</td><td><strong>Sistemas especialistas</strong> ganham espaço (XCON, da DEC)</td></tr>
+          <tr><td class="num">1986</td><td>Redescoberta do <strong>backpropagation</strong></td></tr>
+          <tr><td class="num">1997</td><td><strong>Deep Blue</strong> (IBM) vence Kasparov no xadrez</td></tr>
+          <tr><td class="num">2002</td><td>Robôs domésticos (Roomba) popularizam a IA</td></tr>
+          <tr><td class="num">2006</td><td>Geoffrey Hinton populariza o termo <strong>Deep Learning</strong></td></tr>
+          <tr><td class="num">2011</td><td><strong>Watson</strong> (IBM) vence o Jeopardy!</td></tr>
+          <tr><td class="num">2012</td><td><strong>AlexNet</strong> vence o ImageNet com deep learning + GPU</td></tr>
+          <tr><td class="num">2014</td><td><strong>GANs</strong> (Ian Goodfellow)</td></tr>
+          <tr><td class="num"><strong>2017</strong></td><td><strong>“Attention Is All You Need”</strong> — os <strong>Transformers</strong>, base de GPT, Gemini, Claude e praticamente todo LLM atual</td></tr>
+          <tr><td class="num">2018</td><td><strong>BERT</strong> (Google) — <em>Bidirectional Encoder Representations from Transformers</em></td></tr>
+          <tr><td class="num">2020</td><td><strong>GPT-3</strong>, com 175 bilhões de parâmetros</td></tr>
+          <tr><td class="num">2021</td><td>DALL·E e CLIP — geração de imagem e contexto multimodal</td></tr>
+          <tr><td class="num">2022</td><td><strong>ChatGPT</strong> populariza a IA generativa em larga escala</td></tr>
+          <tr><td class="num">2023</td><td>GPT-4 e modelos multimodais; Google Bard</td></tr>
+          <tr><td class="num">2024</td><td>Gemini 1.5; Microsoft Copilot no Windows/Office; Claude 2 e 3 (textos longos); DeepSeek open-source</td></tr>
+          <tr><td class="num">2025</td><td>Multimodais em tempo real; adoção corporativa de APIs, copilots e agentes autônomos</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <span class="tag">A pergunta “por que agora?”</span>
+      <p>Três fatores, e ele quer os três: <strong>grande volume de dados</strong> (internet, sensores, redes sociais, smartphones) + <strong>maior poder computacional</strong> (GPUs, nuvem, hardware especializado) + <strong>novos algoritmos</strong> (deep learning, transformers, aprendizado por reforço). Resultado: IA mais precisa, mais rápida e mais acessível.</p>
+    </div>
+
+    <p><strong>Desafios em aberto:</strong> alucinações, custo computacional elevado, questões éticas e regulatórias, e a busca por maior explicabilidade.</p>
+  </div>
+</section>
+
+<!-- ============ PROLOG ============ -->
+<section id="prolog">
+  <h2><span class="num">Bônus — “não cai”</span>Prolog</h2>
+  <div class="prose">
+    <p>Ele disse que não cai. Vai que cai. São cinco minutos.</p>
+    <p>Prolog é a linguagem da <strong>IA simbólica</strong> — aparece na aula 02 ao lado de SHRDLU e XCON. Você não descreve <em>como</em> resolver; descreve <strong>fatos e regras</strong>, e o motor deduz.</p>
+
+    <h3>Fatos, regras, consultas</h3>
+<pre><i>% fatos: o que é verdade</i>
+homem(socrates).
+homem(platao).
+
+<i>% regra: se X é homem, então X é mortal</i>
+mortal(X) :- homem(X).
+
+<i>% consulta</i>
+?- mortal(socrates).
+true.
+
+?- mortal(X).
+X = socrates ;
+X = platao.</pre>
+    <p>É o silogismo do slide “pensando racionalmente”, escrito em código. <code>:-</code> lê-se “se”; a vírgula é “e”; maiúscula é variável, minúscula é átomo (constante).</p>
+
+    <h3>O gancho com a matéria de busca</h3>
+    <p>Prolog resolve consultas por <strong>backtracking</strong> — ou seja, faz <strong>DFS</strong> na árvore de derivação, de graça. Este programa acha caminhos num grafo:</p>
+<pre>aresta(a,b).  aresta(a,c).  aresta(b,d).
+aresta(c,d).  aresta(d,g).
+
+caminho(X, X, [X]).
+caminho(X, Y, [X|Resto]) :-
+    aresta(X, Z),
+    caminho(Z, Y, Resto).
+
+?- caminho(a, g, C).
+C = [a, b, d, g] ;
+C = [a, c, d, g].</pre>
+    <p>Se perguntarem qual estratégia de busca o Prolog usa: <strong>profundidade, da esquerda para a direita, com backtracking</strong> — e por isso ele pode entrar em laço infinito num grafo com ciclos, exatamente como um DFS sem conjunto de visitados.</p>
+  </div>
+</section>
+
+<!-- ============ AUTOTESTE ============ -->
+<section id="autoteste">
+  <h2><span class="num">Último passo</span>Autoteste</h2>
+  <div class="prose">
+    <p>Responda em voz alta antes de clicar. Se travar em alguma, volte na seção correspondente.</p>
+  </div>
+
+  <div class="cards" id="cards">
+    <div class="card"><button type="button">Qual estrutura de dados cada algoritmo usa?</button>
+      <div class="ans">BFS: fila (FIFO). DFS: pilha (LIFO). Dijkstra, gulosa e A*: fila de prioridade — ordenada por <code>g</code>, <code>h</code> e <code>g+h</code> respectivamente.</div></div>
+
+    <div class="card"><button type="button">Por que o BFS garante o menor caminho e o DFS não?</button>
+      <div class="ans">O BFS expande por níveis: só chega à profundidade <em>k+1</em> depois de esgotar a <em>k</em>, então a primeira vez que toca o objetivo é pelo menor número de passos. O DFS mergulha num ramo até o fim — pode achar o objetivo por um desvio longo antes de considerar o caminho curto. Ressalva: o BFS é ótimo <strong>em grafo não ponderado</strong>.</div></div>
+
+    <div class="card"><button type="button">O que é a tabela de pais e para que serve?</button>
+      <div class="ans">O registro de “quem me descobriu”. Durante a busca, cada estado guarda de onde veio. Ao encontrar o objetivo, seguem-se essas referências de volta até o estado inicial e inverte-se a lista — é assim que todo algoritmo devolve o caminho.</div></div>
+
+    <div class="card"><button type="button">Na ordem cima→direita→baixo→esquerda, em que ordem o DFS empilha?</button>
+      <div class="ans">Invertida: esquerda → baixo → direita → cima. Como a pilha devolve o último que entrou, empilhar ao contrário faz o desempilhamento sair na ordem desejada.</div></div>
+
+    <div class="card"><button type="button">f(n) = ? para cada algoritmo</button>
+      <div class="ans">Dijkstra: <code>f(n) = g(n)</code>. Gulosa: <code>f(n) = h(n)</code>. A*: <code>f(n) = g(n) + h(n)</code>. BFS e DFS não usam função de avaliação — usam a ordem da fila e da pilha.</div></div>
+
+    <div class="card"><button type="button">Qual a diferença entre g(n) e h(n)?</button>
+      <div class="ans"><code>g(n)</code> é o custo <strong>real já percorrido</strong> do início até n. <code>h(n)</code> é a <strong>estimativa</strong> de n até o objetivo. Um olha para trás, o outro para a frente.</div></div>
+
+    <div class="card"><button type="button">Calcule a distância de Manhattan de (1,2) até (4,6).</button>
+      <div class="ans"><code>|1−4| + |2−6| = 3 + 4 = 7</code>. E a euclidiana seria <code>√(9+16) = 5</code> — sempre menor ou igual à Manhattan.</div></div>
+
+    <div class="card"><button type="button">O que torna uma heurística admissível, e por que importa?</button>
+      <div class="ans">Ela nunca superestima o custo real até o objetivo. Importa porque é a condição que garante que o <strong>A* encontre o caminho ótimo</strong>. Manhattan é admissível num grid com movimentos só em 4 direções e custo 1.</div></div>
+
+    <div class="card"><button type="button">Por que a busca gulosa pode falhar?</button>
+      <div class="ans">Porque ignora <code>g(n)</code>: segue o que <em>parece</em> mais perto do objetivo sem considerar o quanto já gastou. Pode entrar num corredor que aponta para o alvo e terminar num beco, ou achar um caminho válido porém muito mais caro que o ótimo. Não é ótima nem sempre completa.</div></div>
+
+    <div class="card"><button type="button">O que o A* faz que a gulosa não faz?</button>
+      <div class="ans">Mantém uma tabela de custos e pais que <strong>pode ser atualizada</strong>: ao descobrir um caminho mais barato para um nó já conhecido, ele reescreve <code>g</code> e o pai daquele nó. A gulosa nunca revisa, porque não acompanha custo.</div></div>
+
+    <div class="card"><button type="button">Como o A* vira Dijkstra? E como vira gulosa?</button>
+      <div class="ans">Com <code>h(n) = 0</code> para todo n, <code>f(n) = g(n)</code> → Dijkstra. Ignorando <code>g(n)</code>, <code>f(n) = h(n)</code> → gulosa. O A* é a generalização dos dois.</div></div>
+
+    <div class="card"><button type="button">Descreva os três passos do Dijkstra.</button>
+      <div class="ans">1) Inicialização: origem com 0, os demais com ∞, todos não visitados. 2) Escolha: entre os não visitados, pegue o de menor distância atual e marque como visitado. 3) Relaxamento: para cada vizinho, se <code>dist(u) + peso(u,v)</code> for menor que a distância registrada, atualize a distância <strong>e o pai</strong>.</div></div>
+
+    <div class="card"><button type="button">O que é PEAS? Dê o exemplo do carro autônomo.</button>
+      <div class="ans">Performance (segurança, rapidez, conforto), Environment (ruas, trânsito, pedestres), Actuators (volante, freio, acelerador), Sensors (câmeras, GPS, radar). Serve para especificar o ambiente de tarefa de um agente.</div></div>
+
+    <div class="card"><button type="button">Diferencie agente reativo simples de agente baseado em utilidade.</button>
+      <div class="ans">O reativo simples age só pela percepção atual, com regras se…então, ignorando o histórico (termostato). O baseado em utilidade lida com múltiplos objetivos ou incerteza e escolhe a ação que <strong>maximiza a utilidade</strong> — o aspirador que quer limpar, mas também rápido e gastando pouca energia.</div></div>
+
+    <div class="card"><button type="button">Por que uma LLM alucina?</button>
+      <div class="ans">Porque não consulta um banco de dados: ela prevê a palavra mais provável dado o contexto. Quando falta informação, a distribuição fica achatada, ela escolhe uma opção qualquer e depois precisa manter a coerência dessa escolha errada — o efeito bola de neve. O texto fica plausível e falso ao mesmo tempo.</div></div>
+
+    <div class="card"><button type="button">O que é RAG e que problema resolve?</button>
+      <div class="ans">Retrieval-Augmented Generation: em vez de responder só com os pesos do modelo, a IA <strong>consulta documentos externos antes de responder</strong>. Reduz alucinação em perguntas factuais — como buscar o artigo 121 do Código Penal em vez de reproduzi-lo de memória.</div></div>
+
+    <div class="card"><button type="button">O que é MCP e quais seus três pilares?</button>
+      <div class="ans">Model Context Protocol, protocolo aberto da Anthropic que padroniza a conexão entre LLMs/agentes e sistemas externos. Pilares: <strong>Resources</strong> (dados de leitura), <strong>Tools</strong> (funções executáveis) e <strong>Prompts</strong> (templates do servidor). Ganho: um servidor escrito uma vez serve qualquer agente compatível.</div></div>
+
+    <div class="card"><button type="button">Simbólica ou baseada em dados: qual é explicável, e qual escala?</button>
+      <div class="ans">A simbólica é explicável (dá para saber exatamente por que decidiu), mas não escala — as regras são codificadas à mão. A baseada em dados escala e generaliza, mas é caixa-preta. A tendência é o híbrido neurossimbólico.</div></div>
+  </div>
+</section>
+
+<footer>
+  <p>Montado a partir dos nove decks da disciplina e do repositório <code>agente_python</code>. Bibliografia: RUSSELL, Stuart J.; NORVIG, Peter. <em>Inteligência Artificial: Uma Abordagem Moderna</em>. Rio de Janeiro: GEN LTC, 2022.</p>
+</footer>
+
+</main>
+</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- o labirinto dos slides ---------- */
+  var GRID = ["S..#...",
+              "##.#.#.",
+              ".....#.",
+              ".###.#.",
+              "......G"];
+  var R = 5, C = 7;
+  var START = [0,0], GOAL = [4,6];
+  var MUD = {"3,4":true, "4,4":true, "4,5":true};
+  /* cima, direita, baixo, esquerda */
+  var MOVES = [[-1,0],[0,1],[1,0],[0,-1]];
+  var ARROWS = ["↑","→","↓","←"];
+
+  function k(r,c){ return r + "," + c; }
+  function inside(r,c){ return r>=0 && r<R && c>=0 && c<C; }
+  function isWall(r,c){ return GRID[r][c] === "#"; }
+  function cost(r,c){ return MUD[k(r,c)] ? 2 : 1; }
+  function h(r,c){ return Math.abs(r-GOAL[0]) + Math.abs(c-GOAL[1]); }
+  function parse(key){ var p = key.split(","); return [+p[0], +p[1]]; }
+
+  var START_K = k(START[0],START[1]), GOAL_K = k(GOAL[0],GOAL[1]);
+
+  /* Examina os 4 vizinhos e devolve o relatório no formato dos slides. */
+  function survey(r, c, seen){
+    var report = [], open = [];
+    for (var i=0;i<MOVES.length;i++){
+      var nr = r + MOVES[i][0], nc = c + MOVES[i][1];
+      var label = "(" + nr + "," + nc + ")";
+      if (!inside(nr,nc))            report.push([ARROWS[i], label, "fora do labirinto"]);
+      else if (isWall(nr,nc))        report.push([ARROWS[i], label, "parede"]);
+      else if (seen[k(nr,nc)])       report.push([ARROWS[i], label, "já visitado"]);
+      else { report.push([ARROWS[i], label, "livre"]); open.push([nr,nc]); }
+    }
+    return {report:report, open:open};
+  }
+
+  function rebuild(parent, key){
+    var path = [key], guard = 0;
+    while (parent[key] != null && guard++ < 200){ key = parent[key]; path.push(key); }
+    return path.reverse();
+  }
+
+  /* ---------- BFS e DFS ----------
+     O objetivo é testado AO GERAR o vizinho, que é como o professor
+     traça no quadro: BFS termina na iteração 17, DFS na 14.         */
+  function runBlind(mode){
+    var steps = [], frontier = [START_K], seen = {}, parent = {}, labels = {};
+    var order = 0, path = null;
+    parent[START_K] = null;
+    if (mode === "bfs") seen[START_K] = true;
+
+    while (frontier.length){
+      var key = (mode === "bfs") ? frontier.shift() : frontier.pop();
+      var rc = parse(key), r = rc[0], c = rc[1];
+
+      if (mode === "dfs"){
+        if (seen[key]) continue;
+        seen[key] = true;
+      }
+      labels[key] = order++;
+
+      var s = survey(r, c, seen);
+      var open = s.open;
+      var note = s.report;
+
+      var hit = null;
+      for (var z=0;z<open.length;z++){
+        if (k(open[z][0], open[z][1]) === GOAL_K) hit = open[z];
+      }
+      if (hit){
+        var alvo = "(" + hit[0] + "," + hit[1] + ")";
+        for (var y=0;y<note.length;y++) if (note[y][1] === alvo) note[y][2] = "objetivo ⚑";
+        parent[GOAL_K] = key;
+        labels[GOAL_K] = order;
+        path = rebuild(parent, GOAL_K);
+      }
+
+      var snapshot = {
+        cur: key,
+        frontier: frontier.slice(),
+        seen: Object.keys(seen),
+        labels: copy(labels),
+        note: note,
+        found: !!hit
+      };
+      steps.push(snapshot);
+      if (hit){ snapshot.frontierAfter = frontier.slice(); break; }
+
+      if (mode === "dfs") open = open.slice().reverse();  /* empilha invertido */
+      for (var i=0;i<open.length;i++){
+        var nk = k(open[i][0], open[i][1]);
+        if (mode === "bfs"){
+          if (!seen[nk]){ seen[nk] = true; parent[nk] = key; frontier.push(nk); }
+        } else {
+          if (!seen[nk]){ parent[nk] = key; frontier.push(nk); }
+        }
+      }
+      /* o snapshot mostra a fronteira já atualizada para o próximo passo */
+      snapshot.frontierAfter = frontier.slice();
+    }
+    return {steps:steps, path:path};
+  }
+
+  /* ---------- Dijkstra, gulosa e A* ---------- */
+  function runPriority(mode){
+    var steps = [], parent = {}, g = {}, closed = {}, path = null;
+    var frontier = [];
+    g[START_K] = 0;
+    parent[START_K] = null;
+
+    function score(key){
+      var rc = parse(key);
+      if (mode === "dij")   return g[key];
+      if (mode === "gbfs")  return h(rc[0], rc[1]);
+      return g[key] + h(rc[0], rc[1]);           /* astar */
+    }
+    function push(key){
+      for (var i=0;i<frontier.length;i++) if (frontier[i] === key) return;
+      frontier.push(key);
+    }
+    function pullBest(){
+      var best = 0;
+      for (var i=1;i<frontier.length;i++) if (score(frontier[i]) < score(frontier[best])) best = i;
+      return frontier.splice(best,1)[0];
+    }
+
+    push(START_K);
+    while (frontier.length){
+      var key = pullBest();
+      if (closed[key]) continue;
+      closed[key] = true;
+      var rc = parse(key), r = rc[0], c = rc[1];
+
+      /* A gulosa encerra ao GERAR o objetivo (como nos slides).
+         Dijkstra e A* encerram ao EXPANDI-LO -- é o que preserva a
+         garantia de otimalidade dos dois.                           */
+      var found = (key === GOAL_K);
+      var s = survey(r, c, closed);
+      var note;
+      if (found){
+        note = [["⚑", "(" + r + "," + c + ")", "objetivo encontrado"]];
+      } else {
+        note = [];
+        for (var j=0;j<s.report.length;j++){
+          var row = s.report[j].slice();
+          if (row[2] === "livre"){
+            var p = row[1].replace(/[()]/g,"").split(",");
+            var nr = +p[0], nc = +p[1], nk = k(nr,nc);
+            var cand = g[key] + cost(nr,nc);
+            if (mode === "gbfs")      row[2] = "h = " + h(nr,nc);
+            else if (mode === "dij")  row[2] = "g = " + cand + (g[nk] != null && cand >= g[nk] ? " (não melhora)" : "");
+            else                      row[2] = "f = " + cand + " + " + h(nr,nc) + " = " + (cand + h(nr,nc));
+          }
+          note.push(row);
+        }
+        if (mode === "gbfs"){
+          for (var w=0;w<s.open.length;w++){
+            if (k(s.open[w][0], s.open[w][1]) === GOAL_K){
+              found = true;
+              parent[GOAL_K] = key;
+              if (g[GOAL_K] == null) g[GOAL_K] = g[key] + 1;
+              var alvoG = "(" + s.open[w][0] + "," + s.open[w][1] + ")";
+              for (var x=0;x<note.length;x++) if (note[x][1] === alvoG) note[x][2] = "objetivo ⚑";
+            }
+          }
+        }
+      }
+
+      var labels = {};
+      for (var key2 in g){
+        var q = parse(key2);
+        labels[key2] = (mode === "gbfs") ? h(q[0],q[1])
+                     : (mode === "dij")  ? g[key2]
+                                         : g[key2] + h(q[0],q[1]);
+      }
+      if (mode === "gbfs") for (var fk=0; fk<frontier.length; fk++){
+        var fq = parse(frontier[fk]); labels[frontier[fk]] = h(fq[0],fq[1]);
+      }
+
+      var snap = {
+        cur: key,
+        frontier: frontier.slice(),
+        seen: Object.keys(closed),
+        labels: labels,
+        note: note,
+        found: found,
+        /* a gulosa não acompanha custo -- mostrar g aqui seria enganoso */
+        gval: (mode === "gbfs") ? null : g[key]
+      };
+      steps.push(snap);
+      if (found){
+        path = rebuild(parent, GOAL_K);   /* serve para os dois testes de objetivo */
+        snap.frontierAfter = frontier.slice();
+        break;
+      }
+
+      for (var i=0;i<s.open.length;i++){
+        var ar = s.open[i][0], ac = s.open[i][1], akey = k(ar,ac);
+        if (mode === "gbfs"){
+          if (!closed[akey]){ if (parent[akey] == null) parent[akey] = key; if (g[akey] == null) g[akey] = g[key] + 1; push(akey); }
+        } else {
+          var novo = g[key] + cost(ar,ac);
+          if (g[akey] == null || novo < g[akey]){   /* relaxamento */
+            g[akey] = novo;
+            parent[akey] = key;
+            push(akey);
+          }
+        }
+      }
+      steps[steps.length-1].frontierAfter = frontier.slice();
+    }
+    return {steps:steps, path:path};
+  }
+
+  function copy(o){ var n = {}; for (var p in o) n[p] = o[p]; return n; }
+
+  var ALGOS = {
+    bfs:   {name:"Busca em largura (BFS)",          frontierLabel:"Fila",      run:function(){ return runBlind("bfs"); }},
+    dfs:   {name:"Busca em profundidade (DFS)",     frontierLabel:"Pilha",     run:function(){ return runBlind("dfs"); }},
+    dij:   {name:"Dijkstra — menor custo g(n)", frontierLabel:"Fronteira", run:function(){ return runPriority("dij"); }},
+    gbfs:  {name:"Busca gulosa — menor h(n)",  frontierLabel:"Fronteira", run:function(){ return runPriority("gbfs"); }},
+    astar: {name:"A* — menor f(n) = g(n)+h(n)", frontierLabel:"Fronteira", run:function(){ return runPriority("astar"); }}
+  };
+
+  /* ---------- interface ---------- */
+  var maze = document.getElementById("maze");
+  var axis = document.getElementById("axis");
+  var cells = [];
+  var current = "bfs", result = null, idx = -1, timer = null, showH = false;
+
+  for (var c=0;c<C;c++){ var a = document.createElement("div"); a.textContent = c; axis.appendChild(a); }
+
+  for (var r=0;r<R;r++){
+    for (var cc=0;cc<C;cc++){
+      var el = document.createElement("div");
+      el.className = "cell";
+      el.dataset.key = k(r,cc);
+      if (isWall(r,cc)) el.classList.add("wall");
+      if (MUD[k(r,cc)]) el.classList.add("mud");
+      if (k(r,cc) === START_K || k(r,cc) === GOAL_K){
+        el.classList.add("sg");
+        var t = document.createElement("i");
+        t.className = "tagmark";
+        t.textContent = (k(r,cc) === START_K) ? "S" : "G";
+        el.appendChild(t);
+      }
+      maze.appendChild(el);
+      cells.push(el);
+    }
+  }
+
+  function cellAt(key){
+    for (var i=0;i<cells.length;i++) if (cells[i].dataset.key === key) return cells[i];
+    return null;
+  }
+
+  function chipRow(host, keys, cls){
+    host.innerHTML = "";
+    if (!keys.length){ host.innerHTML = '<span class="chip">vazio</span>'; return; }
+    for (var i=0;i<keys.length;i++){
+      var s = document.createElement("span");
+      s.className = "chip" + (cls ? " " + cls : "");
+      s.textContent = "(" + keys[i] + ")";
+      host.appendChild(s);
+    }
+  }
+
+  function paint(){
+    var step = (idx >= 0 && result) ? result.steps[idx] : null;
+    var onPath = {};
+    var finished = result && step && step.found;
+    if (finished && result.path) for (var i=0;i<result.path.length;i++) onPath[result.path[i]] = true;
+
+    for (var j=0;j<cells.length;j++){
+      var el = cells[j], key = el.dataset.key;
+      el.classList.remove("visited","frontier","current","path");
+      var num = el.querySelector(".numlabel");
+      if (num) num.remove();
+      var hv = el.querySelector(".hval");
+      if (hv) hv.remove();
+
+      if (el.classList.contains("wall")) continue;
+      var rc = parse(key);
+
+      if (showH){
+        var hs = document.createElement("i");
+        hs.className = "hval";
+        hs.textContent = h(rc[0], rc[1]);
+        el.appendChild(hs);
+      }
+
+      if (!step) continue;
+
+      if (onPath[key]) el.classList.add("path");
+      else {
+        var live = step.frontierAfter || step.frontier;
+        /* a fronteira tem prioridade sobre "visitado": no BFS um nó já
+           entra em `seen` ao ser enfileirado, sem ter sido expandido. */
+        if (key === step.cur) el.classList.add("current");
+        else if (live.indexOf(key) !== -1) el.classList.add("frontier");
+        else if (step.seen.indexOf(key) !== -1) el.classList.add("visited");
+      }
+
+      if (step.labels && step.labels[key] != null && !el.querySelector(".tagmark")){
+        var lb = document.createElement("span");
+        lb.className = "numlabel";
+        lb.textContent = step.labels[key];
+        el.appendChild(lb);
+      }
+    }
+
+    var rIter = document.getElementById("rIter");
+    var rCur  = document.getElementById("rCur");
+    var rNote = document.getElementById("rNote");
+    var rRes  = document.getElementById("rResult");
+
+    if (!step){
+      rIter.textContent = "—";
+      rCur.textContent = "—";
+      rNote.textContent = "Aperte Passo para começar.";
+      chipRow(document.getElementById("rFront"), [START_K]);
+      chipRow(document.getElementById("rVis"), []);
+      rRes.textContent = "Busca não iniciada.";
+      return;
+    }
+
+    rIter.textContent = "ITERAÇÃO " + (idx+1) + " de " + result.steps.length;
+    rCur.textContent = "(" + step.cur + ")" + (step.gval != null ? "   g = " + step.gval : "");
+    chipRow(document.getElementById("rFront"), (step.frontierAfter || step.frontier), "hot");
+    chipRow(document.getElementById("rVis"), step.seen);
+
+    var html = "";
+    for (var n=0;n<step.note.length;n++){
+      html += "<b>" + step.note[n][0] + " " + step.note[n][1] + "</b> → " + step.note[n][2] + "<br>";
+    }
+    rNote.innerHTML = html;
+
+    if (step.found && result.path){
+      var moves = result.path.length - 1;
+      var total = 0;
+      for (var p=1;p<result.path.length;p++){ var q = parse(result.path[p]); total += cost(q[0],q[1]); }
+      rRes.innerHTML = "<b>Objetivo alcançado em " + result.steps.length + " iterações.</b><br>" +
+                       "Caminho: " + result.path.length + " estados / " + moves + " movimentos." +
+                       (current === "dij" || current === "astar" ? "<br>Custo total: " + total + "." : "") +
+                       "<br>Reconstruído pela tabela de pais.";
+    } else {
+      rRes.textContent = "Busca em andamento.";
+    }
+  }
+
+  function reset(){
+    stopAuto();
+    result = ALGOS[current].run();
+    idx = -1;
+    document.getElementById("labTitle").textContent = ALGOS[current].name;
+    document.getElementById("kFront").textContent = ALGOS[current].frontierLabel;
+    document.getElementById("btnStep").disabled = false;
+    paint();
+  }
+
+  function step(){
+    if (!result) return;
+    if (idx < result.steps.length - 1){
+      idx++;
+      paint();
+      if (idx === result.steps.length - 1){
+        document.getElementById("btnStep").disabled = true;
+        stopAuto();
+      }
+    }
+  }
+
+  function stopAuto(){
+    if (timer){ clearInterval(timer); timer = null; document.getElementById("btnAuto").textContent = "Auto"; }
+  }
+
+  document.getElementById("btnStep").addEventListener("click", step);
+  document.getElementById("btnReset").addEventListener("click", reset);
+  document.getElementById("btnAuto").addEventListener("click", function(){
+    if (timer) { stopAuto(); return; }
+    if (idx >= result.steps.length - 1) return;
+    this.textContent = "Pausar";
+    timer = setInterval(step, 620);
+  });
+  document.getElementById("btnH").addEventListener("click", function(){
+    showH = !showH;
+    this.setAttribute("aria-pressed", showH ? "true" : "false");
+    this.textContent = showH ? "Ocultar h" : "Mostrar h";
+    paint();
+  });
+
+  var segs = document.querySelectorAll(".seg");
+  for (var s2=0;s2<segs.length;s2++){
+    segs[s2].addEventListener("click", function(){
+      for (var i=0;i<segs.length;i++) segs[i].setAttribute("aria-pressed","false");
+      this.setAttribute("aria-pressed","true");
+      current = this.dataset.algo;
+      reset();
+    });
+  }
+
+  reset();
+
+  /* ---------- flashcards ---------- */
+  var cardBtns = document.querySelectorAll("#cards .card button");
+  for (var b=0;b<cardBtns.length;b++){
+    cardBtns[b].addEventListener("click", function(){
+      this.parentNode.classList.toggle("open");
+    });
+  }
+})();
+</script>
+
+<style>
+.cell .numlabel{font-size:.78rem; font-variant-numeric:tabular-nums;}
+.cell.sg .numlabel{margin-top:6px;}
+</style>
+<script src="theme.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Material de revisao da disciplina de Inteligencia Artificial: guia, exercicios de tracado e simulado.">
+  <title>Mapa de estudo — Inteligência Artificial</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🗺️%3C/text%3E%3C/svg%3E">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;}
+    html{-webkit-text-size-adjust:100%;}
+    body{margin:0;}
+    img,svg,video{max-width:100%;height:auto;}
+    button,input,select,textarea{font:inherit;color:inherit;}
+    table{border-collapse:collapse;}
+  </style>
+</head>
+<body>
+<style>
+:root{
+  --paper:#EFEDF2; --surface:#FBFAFD; --surface-2:#E7E4EE;
+  --ink:#1B1622; --ink-soft:#5D5670; --line:#D6D1E0; --grid:#DFDAE8;
+  --accent:#8A2D6E; --accent-soft:#F4DCEE; --accent-ink:#FFFFFF;
+  --wall:#2A2333;
+  --shadow:0 1px 2px rgba(27,22,34,.06), 0 8px 24px -12px rgba(27,22,34,.18);
+  --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Menlo,Consolas,monospace;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --display:Georgia,"Iowan Old Style","Palatino Linotype","Times New Roman",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#141119; --surface:#1D1926; --surface-2:#272232;
+    --ink:#EDE9F4; --ink-soft:#ABA2BE; --line:#332C41; --grid:#221D2C;
+    --accent:#E98FCE; --accent-soft:#3F1B37; --accent-ink:#1B1622;
+    --wall:#0B0910;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141119; --surface:#1D1926; --surface-2:#272232;
+  --ink:#EDE9F4; --ink-soft:#ABA2BE; --line:#332C41; --grid:#221D2C;
+  --accent:#E98FCE; --accent-soft:#3F1B37; --accent-ink:#1B1622;
+  --wall:#0B0910;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+:root[data-theme="light"]{
+  --paper:#EFEDF2; --surface:#FBFAFD; --surface-2:#E7E4EE;
+  --ink:#1B1622; --ink-soft:#5D5670; --line:#D6D1E0; --grid:#DFDAE8;
+  --accent:#8A2D6E; --accent-soft:#F4DCEE; --accent-ink:#FFFFFF;
+  --wall:#2A2333;
+  --shadow:0 1px 2px rgba(27,22,34,.06), 0 8px 24px -12px rgba(27,22,34,.18);
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--body); font-size:16.5px; line-height:1.6;
+  background-image:
+    repeating-linear-gradient(to right, var(--grid) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(to bottom, var(--grid) 0 1px, transparent 1px 28px);
+  -webkit-font-smoothing:antialiased;
+}
+.page{max-width:760px; margin:0 auto; padding:0 20px 80px;}
+
+header{padding:64px 0 28px; border-bottom:2px solid var(--ink); margin-bottom:36px;}
+.eyebrow{font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-soft); margin:0 0 13px;}
+h1{font-family:var(--display); font-weight:700; font-size:clamp(2.2rem,6vw,3.4rem);
+  line-height:1.04; letter-spacing:-.02em; margin:0 0 15px; text-wrap:balance;}
+h1 em{font-style:italic; color:var(--accent);}
+.lede{font-size:1.08rem; color:var(--ink-soft); margin:0; max-width:56ch;}
+
+.cards{display:grid; gap:14px;}
+a.card{
+  display:block; text-decoration:none; color:inherit;
+  background:var(--surface); border:1px solid var(--line); border-radius:4px;
+  padding:22px 24px; box-shadow:var(--shadow);
+  transition:border-color .15s, transform .15s;
+}
+a.card:hover{border-color:var(--accent); transform:translateY(-2px);}
+a.card:focus-visible{outline:2px solid var(--accent); outline-offset:3px;}
+@media (prefers-reduced-motion:reduce){ a.card{transition:none;} a.card:hover{transform:none;} }
+
+.card .etapa{font-family:var(--mono); font-size:.68rem; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--accent); display:block; margin-bottom:8px;}
+.card h2{font-family:var(--display); font-size:1.42rem; letter-spacing:-.012em; margin:0 0 7px;}
+.card p{margin:0 0 12px; color:var(--ink-soft); font-size:.95rem;}
+.card .meta{font-family:var(--mono); font-size:.74rem; color:var(--ink-soft);
+  display:flex; flex-wrap:wrap; gap:6px 14px;}
+.card .meta b{color:var(--accent); font-weight:700;}
+
+h3{font-family:var(--display); font-size:1.2rem; margin:44px 0 10px; letter-spacing:-.01em;}
+p.txt{margin:0 0 13px; color:var(--ink-soft); font-size:.95rem;}
+p.txt strong{color:var(--ink); font-weight:620;}
+code{font-family:var(--mono); font-size:.87em; background:var(--surface-2); padding:.1em .34em; border-radius:2px;}
+ul{margin:0 0 13px; padding-left:22px; color:var(--ink-soft); font-size:.95rem;}
+li{margin-bottom:6px;}
+li strong{color:var(--ink); font-weight:620;}
+
+.aviso{background:var(--surface); border:1px solid var(--line); border-radius:3px;
+  padding:15px 18px; font-size:.9rem; color:var(--ink-soft); margin:16px 0 0; box-shadow:var(--shadow);}
+.aviso b{font-family:var(--mono); font-size:.67rem; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--accent); display:block; margin-bottom:7px;}
+.aviso p{margin:0 0 8px;} .aviso p:last-child{margin:0;}
+
+footer{margin-top:50px; padding-top:20px; border-top:1px solid var(--line);
+  font-size:.85rem; color:var(--ink-soft);}
+footer a{color:var(--accent);}
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Inteligência Artificial · material de revisão</p>
+  <h1>Mapa de <em>estudo</em>.</h1>
+  <p class="lede">Nove aulas condensadas em três páginas que funcionam offline, em qualquer navegador. Peso concentrado em algoritmos de busca.</p>
+</header>
+
+<div class="cards">
+
+  <a class="card" href="guia.html">
+    <span class="etapa">Etapa 1 · revisar</span>
+    <h2>Guia completo</h2>
+    <p>Toda a matéria, do histórico da IA ao A*, com um simulador interativo que roda os cinco algoritmos de busca passo a passo no labirinto da aula.</p>
+    <div class="meta"><span><b>14</b> seções</span><span><b>18</b> flashcards</span><span>simulador BFS · DFS · Dijkstra · gulosa · A*</span></div>
+  </a>
+
+  <a class="card" href="tracado.html">
+    <span class="etapa">Etapa 2 · praticar</span>
+    <h2>Bateria de traçado</h2>
+    <p>Sete exercícios no formato da questão longa: você executa o algoritmo à mão, preenche a tabela iteração por iteração e o gabarito confere campo a campo.</p>
+    <div class="meta"><span><b>7</b> exercícios</span><span><b>70</b> campos</span><span>correção imediata</span></div>
+  </a>
+
+  <a class="card" href="simulado.html">
+    <span class="etapa">Etapa 3 · medir</span>
+    <h2>Simulado</h2>
+    <p>Questões no estilo da prova, com correção na hora e explicação do porquê de cada alternativa. As discursivas trazem o roteiro do que se espera na resposta.</p>
+    <div class="meta"><span><b>35</b> objetivas</span><span><b>4</b> discursivas</span><span>alternativas embaralhadas</span></div>
+  </a>
+
+</div>
+
+<h3>O que mais pesa</h3>
+<p class="txt">Vinte das trinta e cinco questões objetivas são de busca, e os sete exercícios de traçado são todos de busca. Essa é a distribuição proposital: o restante da matéria está coberto no guia, mas o treino está concentrado onde a prova concentra.</p>
+<ul>
+  <li><strong>Busca cega</strong> — BFS e DFS, estruturas, ordem de visita, tabela de pais</li>
+  <li><strong>Busca por custo</strong> — Dijkstra, relaxamento de arestas</li>
+  <li><strong>Busca informada</strong> — Manhattan e euclidiana, gulosa, A* e admissibilidade</li>
+  <li><strong>Agentes</strong> — PEAS, os cinco tipos, memória, ferramentas, MCP</li>
+  <li><strong>Fundamentos e riscos</strong> — simbólica × dados, alucinações, RAG, viés, direitos autorais</li>
+</ul>
+
+<h3>Sobre os números</h3>
+<div class="aviso">
+  <b>Procedência dos gabaritos</b>
+  <p>Todos os traços foram gerados executando os algoritmos de verdade, e conferidos contra uma segunda implementação independente. Onde o material usa o labirinto e os grafos das próprias aulas, o resultado bate com os slides.</p>
+  <p>Dois pontos em que este material diverge deliberadamente do que está projetado em aula, ambos explicados no guia: a distância mínima até E no grafo do Dijkstra é <strong>8</strong> e não 6 (o 6 é a distância até D), e as células de lama do labirinto são uma escolha própria, já que os slides não deixam legível quais são.</p>
+</div>
+
+<h3>Rodando local</h3>
+<p class="txt">São três arquivos HTML sem nenhuma dependência externa — nada de CDN, fonte remota ou build. Basta clonar e abrir <code>index.html</code> no navegador, sem internet:</p>
+<p class="txt"><code>git clone https://github.com/fiorio17/estudo-ia.git</code></p>
+
+<footer>
+  <p>Bibliografia da disciplina: RUSSELL, Stuart J.; NORVIG, Peter. <em>Inteligência Artificial: Uma Abordagem Moderna</em>. Rio de Janeiro: GEN LTC, 2022.</p>
+</footer>
+
+</div>
+<script src="theme.js" defer></script>
+</body>
+</html>
