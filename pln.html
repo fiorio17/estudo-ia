@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Processamento de Linguagem Natural: pipeline, BoW, TF-IDF, embeddings, Transformers, atenção, LLMs e RAG, com calculadoras interativas.">
+  <title>PLN — Inteligência Artificial</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E💬%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="base.css">
+</head>
+<body>
+<div class="page">
+
+<nav class="topnav" aria-label="Páginas">
+  <a href="index.html">Início</a>
+  <a href="guia.html">Busca</a>
+  <a href="genetico.html">Genéticos</a>
+  <a href="pln.html" aria-current="page">PLN</a>
+  <a href="visao.html">Visão</a>
+  <a href="tracado.html">Traçado</a>
+  <a href="simulado.html">Simulado</a>
+  <a href="simulado2.html">Simulado 2</a>
+</nav>
+
+<header class="masthead">
+  <p class="eyebrow">Aulas 12 e PLN II · Inteligência Artificial</p>
+  <h1>Processamento de <em>linguagem natural</em>.</h1>
+  <p class="lede">Do texto cru ao Transformer: pipeline, Bag of Words, TF-IDF, embeddings, atenção, LLMs e RAG. As contas dos slides (TF-IDF, cosseno, softmax) estão em calculadoras que você pode mexer.</p>
+  <ul class="priority">
+    <li><b>Aula 12 · PLN I</b><span>O que é PLN, pipeline, stopwords, stemming × lematização, BoW, TF-IDF, embeddings.</span></li>
+    <li><b>Aula PLN II</b><span>Limites do BoW/TF-IDF, similaridade de cosseno, Word2Vec, Transformers, atenção, LLMs, RAG.</span></li>
+    <li><b>Contas que caem</b><span>TF-IDF à mão, cosseno de dois vetores, softmax da atenção.</span></li>
+  </ul>
+</header>
+
+<div class="shell">
+<nav class="rail" aria-label="Sumário">
+  <p>Sumário</p>
+  <a href="#oque">O que é PLN</a>
+  <a href="#pipeline">Pipeline</a>
+  <a href="#prep">Pré-processamento (lab)</a>
+  <a href="#numerizacao">BoW e TF-IDF (lab)</a>
+  <a href="#limites">Limites do BoW/TF-IDF</a>
+  <hr>
+  <a href="#embeddings">Embeddings</a>
+  <a href="#cosseno">Cosseno (lab)</a>
+  <a href="#word2vec">Word2Vec em Python</a>
+  <hr>
+  <a href="#transformers">Transformers</a>
+  <a href="#atencao">Atenção (lab)</a>
+  <a href="#familias">Encoder / decoder</a>
+  <a href="#blocos">Bloco, posição, máscara</a>
+  <hr>
+  <a href="#llm">LLMs</a>
+  <a href="#rag">RAG</a>
+  <a href="#comparativo">Qual técnica usar</a>
+  <a href="#autoteste">Autoteste</a>
+</nav>
+
+<main>
+
+<!-- ============ O QUE É ============ -->
+<section id="oque">
+  <h2><span class="num">Aula 12</span>O que é PLN</h2>
+  <div class="prose">
+    <p><strong>Processamento de Linguagem Natural (PLN/NLP)</strong> é a área da IA que permite aos computadores <strong>processar, analisar, interpretar e gerar linguagem humana</strong>, em texto ou fala: conversas, mensagens, documentos, comandos de voz. Tarefas típicas: detectar spam, resumir um documento longo, gerar respostas a partir de uma pergunta.</p>
+  </div>
+
+  <h3>Por que a linguagem é difícil para o computador</h3>
+  <p class="prose">Computadores vão bem com dados estruturados (números, tabelas). A linguagem humana traz:</p>
+  <div class="scroller"><table>
+    <thead><tr><th>Desafio</th><th>Exemplo</th><th>Problema</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Ambiguidade</strong></td><td>"banco": instituição financeira ou assento</td><td>O significado depende do contexto</td></tr>
+      <tr><td><strong>Ironia e sarcasmo</strong></td><td>"Nossa, que ótimo! Perdi todos os meus arquivos."</td><td>Palavras positivas, intenção negativa</td></tr>
+      <tr><td><strong>Variações</strong></td><td>"Blz, vlw! Kkk 😅"</td><td>Gírias, abreviações, erros e emojis também carregam significado</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Aplicações</h3>
+  <div class="scroller"><table>
+    <thead><tr><th>Aplicação</th><th>O que faz</th><th>Exemplo</th></tr></thead>
+    <tbody>
+      <tr><td>Tradução automática</td><td>Converte textos entre idiomas preservando o significado</td><td>Google Tradutor</td></tr>
+      <tr><td>Chatbots e assistentes</td><td>Interpretam mensagens e produzem respostas</td><td>Atendimento virtual de uma loja</td></tr>
+      <tr><td>Análise de sentimentos</td><td>Classifica a opinião ou emoção expressa</td><td>Avaliações positivas, negativas ou neutras</td></tr>
+      <tr><td>Detecção de spam</td><td>Identifica mensagens indesejadas ou fraudulentas</td><td>E-mail: spam ou legítimo</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>NLP tradicional × LLMs</h3>
+  <div class="scroller"><table>
+    <thead><tr><th></th><th>NLP tradicional</th><th>LLMs</th></tr></thead>
+    <tbody>
+      <tr><td>Base</td><td>Regras, características extraídas do texto, modelos especializados</td><td>Modelos de linguagem de grande escala, em geral Transformers</td></tr>
+      <tr><td>Tarefas</td><td>Pode exigir treinamento específico para cada tarefa</td><td>Várias tarefas a partir de instruções em linguagem natural</td></tr>
+      <tr><td>Exemplo</td><td>Classificador de spam treinado com e-mails rotulados</td><td>Pedir a um LLM que classifique um e-mail e justifique</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ PIPELINE ============ -->
+<section id="pipeline">
+  <h2><span class="num">Aula 12</span>O pipeline de PLN</h2>
+  <div class="scroller"><table>
+    <thead><tr><th>#</th><th>Etapa</th><th>O que faz</th><th>Exemplo</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td><strong>Texto de entrada</strong></td><td>A frase original do usuário</td><td>"Eu adorei esse filme! Foi muito bom."</td></tr>
+      <tr><td class="num">2</td><td><strong>Limpeza e pré-processamento</strong></td><td>Trata o texto e remove ruído, se necessário</td><td class="mono">eu adorei esse filme foi muito bom</td></tr>
+      <tr><td class="num">3</td><td><strong>Tokenização</strong></td><td>Divide em unidades menores (tokens)</td><td class="mono">eu | adorei | esse | filme | foi | muito | bom</td></tr>
+      <tr><td class="num">4</td><td><strong>Representação numérica</strong></td><td>Transforma tokens em números utilizáveis pelo modelo</td><td class="mono">Bag of Words → [1, 1, 0]</td></tr>
+      <tr><td class="num">5</td><td><strong>Modelo</strong></td><td>Classifica, prevê ou gera</td><td>Sentimento positivo</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn">
+    <span class="tag">Não limpe tudo</span>
+    <p>Remover tudo indiscriminadamente é um erro. A palavra <strong>"não"</strong> pode inverter o sentido da frase; emojis, pontuação e maiúsculas podem carregar sentimento. Em tokenização simples, tokens = palavras, mas modelos modernos dividem palavras em partes menores.</p>
+  </div>
+</section>
+
+<!-- ============ PRÉ-PROCESSAMENTO LAB ============ -->
+<section id="prep">
+  <h2><span class="num">Aula 12 · laboratório</span>Stopwords, stemming e lematização</h2>
+  <div class="prose">
+    <ul>
+      <li><strong>Stopwords</strong>: palavras muito frequentes (artigos <em>o, a, um</em>; preposições <em>de, em, para, com</em>; conjunções <em>e, ou, mas</em>; pronomes <em>ele, ela, nós</em>) que, em certas tarefas, contribuem pouco. Mas uma stopword nem sempre é irrelevante: "Eu <em>não</em> gostei do filme".</li>
+      <li><strong>Stemming</strong>: corta prefixos/sufixos por regras. O resultado (stem/radical) <em>nem sempre é uma palavra válida</em>: estudando, estudaram, estudante → <code>estud</code>. Rápido e simples, mas pode agrupar palavras de sentidos diferentes.</li>
+      <li><strong>Lematização</strong>: leva a palavra à forma canônica (lema), considerando a gramática: gatos → gato, estudando → estudar, melhores → bom, "são" → ser <em>ou</em> são, conforme o contexto. Exige mais recursos linguísticos, mas é mais interpretável.</li>
+    </ul>
+  </div>
+
+  <div class="lab" id="labprep">
+    <div class="lab-head"><h3>Pré-processador</h3>
+      <div class="segmented" role="group" aria-label="Exemplos">
+        <button class="seg" data-ex="O aluno estudou programação de computadores.">Slide: aluno</button>
+        <button class="seg" data-ex="Eu não gostei do filme.">Slide: "não"</button>
+        <button class="seg" data-ex="Eu adorei esse filme! Foi muito bom. 😅">Slide: filme</button>
+      </div>
+    </div>
+    <div class="field"><label for="ptxt">Texto</label><textarea class="in" id="ptxt">O aluno estudou programação de computadores.</textarea></div>
+    <div class="fields" style="margin-top:12px">
+      <div class="field"><label><input type="checkbox" id="pLow" checked> Minúsculas</label></div>
+      <div class="field"><label><input type="checkbox" id="pPunc" checked> Remover pontuação/emojis</label></div>
+      <div class="field"><label><input type="checkbox" id="pStop"> Remover stopwords</label></div>
+      <div class="field"><label><input type="checkbox" id="pNeg"> Proteger negações (não, nunca, nem)</label></div>
+    </div>
+    <div class="readout">
+      <div class="row"><span class="k">Tokens</span><span class="chips" id="pTok"></span></div>
+      <div class="row"><span class="k">Stemming</span><span class="chips" id="pStem"></span></div>
+      <div class="row"><span class="k">Lematização</span><span class="chips" id="pLem"></span></div>
+      <div class="row"><span class="k">Alerta</span><p class="note" id="pAl">—</p></div>
+    </div>
+    <p class="hint" style="margin-top:12px">Demonstração didática: o stemmer é um removedor de sufixos simplificado e o lematizador consulta um dicionário pequeno (palavras não listadas ficam como estão). Em projetos reais usam-se NLTK (stemming) e spaCy (lematização).</p>
+  </div>
+</section>
+
+<!-- ============ BoW / TF-IDF ============ -->
+<section id="numerizacao">
+  <h2><span class="num">Aula 12 · laboratório</span>Bag of Words e TF-IDF</h2>
+  <div class="prose">
+    <h3>Bag of Words (saco de palavras)</h3>
+    <p>Reúne os textos, cria um <strong>vocabulário</strong>, conta a frequência de cada palavra em cada texto e representa cada texto por um vetor. Exemplo: "gosto de Python" e "gosto de Java" com vocabulário <code>[gosto, de, Python, Java]</code> dão <code>[1,1,1,0]</code> e <code>[1,1,0,1]</code>. É simples e bom como ponto de partida, mas <strong>ignora a ordem e o significado</strong>.</p>
+    <h3>TF-IDF</h3>
+    <p>Dá peso às palavras pela frequência no documento e pela raridade no corpus.</p>
+  </div>
+  <div class="formula">TF(t,d) = (vezes que t aparece em d) / (nº de palavras de d)</div>
+  <div class="formula">IDF(t) = log₁₀( N / df(t) )&nbsp;&nbsp; (N = nº de documentos, df = docs que contêm t)</div>
+  <div class="formula">TF-IDF(t,d) = TF(t,d) × IDF(t)</div>
+  <p class="prose">Palavra em quase todos os textos ("que", "para") → IDF perto de 0. Palavra rara ("criptografia") → IDF alto. TF alto + IDF baixo → peso baixo; TF alto + IDF alto → ótima "assinatura" do texto. <strong>Um corpus é o conjunto de documentos.</strong></p>
+
+  <div class="lab" id="labtf">
+    <div class="lab-head"><h3>Calculadora (um documento por linha)</h3>
+      <div class="segmented" role="group" aria-label="Exemplos">
+        <button class="seg" data-corpus="A inteligência artificial aprende.&#10;O menino aprende a ler.">Slide: TF-IDF</button>
+        <button class="seg" data-corpus="gosto de Python&#10;gosto de Java">Slide: BoW</button>
+        <button class="seg" data-corpus="O cachorro mordeu o homem.&#10;O homem mordeu o cachorro.">Cachorro × homem</button>
+      </div>
+    </div>
+    <div class="field"><label for="tfdocs">Corpus</label><textarea class="in" id="tfdocs" style="min-height:90px">A inteligência artificial aprende.
+O menino aprende a ler.</textarea></div>
+    <div id="tfout"></div>
+  </div>
+  <div class="callout">
+    <span class="tag">Conferindo o slide</span>
+    <p>Doc 1 = "A inteligência artificial aprende." (4 palavras). "aprende": TF = 1/4 = 0,25; IDF = log₁₀(2/2) = 0; TF-IDF = <strong>0</strong>. "inteligência": TF = 0,25; IDF = log₁₀(2/1) = 0,301; TF-IDF = <strong>0,075</strong>. A palavra "a" também aparece nos dois documentos, por isso também zera.</p>
+  </div>
+  <div class="callout warn">
+    <span class="tag">Observação</span>
+    <p>Bibliotecas como o scikit-learn usam variações (logaritmo natural, suavização, normalização), então os números diferem dos do slide. Em prova, use a fórmula da aula. Palavra rara não é, por si só, importante: o peso depende da frequência e da distribuição.</p>
+  </div>
+</section>
+
+<!-- ============ LIMITES ============ -->
+<section id="limites">
+  <h2><span class="num">PLN II</span>Limites do BoW e do TF-IDF</h2>
+  <div class="prose"><p>Representar o texto só pela ocorrência ou importância estatística das palavras não captura o significado. Três limitações:</p></div>
+  <div class="scroller"><table>
+    <thead><tr><th>Limitação</th><th>Exemplo</th><th>Consequência</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Ignora a ordem</strong></td><td>"O cachorro mordeu o homem" × "O homem mordeu o cachorro"</td><td>Mesmo vetor, significados diferentes</td></tr>
+      <tr><td><strong>Não vê sinônimos</strong></td><td>"O carro é rápido" × "O automóvel é veloz"</td><td>Vocabulário [carro, automóvel, rápido, veloz] → <code>[1,0,1,0]</code> × <code>[0,1,0,1]</code>: similaridade = 0</td></tr>
+      <tr><td><strong>Ambiguidade semântica</strong></td><td>"Fui ao banco sacar dinheiro" × "Sentei no banco da praça"</td><td>"banco" ocupa a mesma posição do vocabulário nos dois sentidos</td></tr>
+    </tbody>
+  </table></div>
+  <div class="scroller"><table>
+    <thead><tr><th>Característica</th><th>BoW</th><th>TF-IDF</th></tr></thead>
+    <tbody>
+      <tr><td>Identifica palavras presentes</td><td>✅</td><td>✅</td></tr>
+      <tr><td>Considera frequência</td><td>✅</td><td>✅</td></tr>
+      <tr><td>Considera importância estatística no corpus</td><td>❌</td><td>✅</td></tr>
+      <tr><td>Preserva a ordem</td><td>❌</td><td>❌</td></tr>
+      <tr><td>Reconhece sinônimos</td><td>❌</td><td>❌</td></tr>
+      <tr><td>Representa o significado contextual</td><td>❌</td><td>❌</td></tr>
+      <tr><td>Captura relações semânticas</td><td>❌</td><td>❌</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ EMBEDDINGS ============ -->
+<section id="embeddings">
+  <h2><span class="num">Aula 12 + PLN II</span>Embeddings</h2>
+  <div class="prose">
+    <p><strong>Embeddings</strong> são representações numéricas de palavras, frases ou outros elementos como <strong>vetores num espaço multidimensional</strong>, aprendidos a partir de dados, capazes de capturar relações semânticas (e, conforme o método, sintáticas). A imagem do slide: um <strong>GPS do significado</strong> — palavras de sentido parecido ficam "vizinhas" no mapa.</p>
+  </div>
+  <div class="scroller"><table>
+    <thead><tr><th>Palavra</th><th class="num">Dim 1</th><th class="num">Dim 2</th><th class="num">Dim 3</th></tr></thead>
+    <tbody>
+      <tr><td>carro</td><td class="num">0,82</td><td class="num">0,71</td><td class="num">0,15</td></tr>
+      <tr><td>automóvel</td><td class="num">0,79</td><td class="num">0,74</td><td class="num">0,18</td></tr>
+      <tr><td>banana</td><td class="num">0,12</td><td class="num">0,21</td><td class="num">0,91</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">Carro e automóvel têm vetores parecidos; banana é diferente. <strong>Embeddings reais não têm dimensões interpretáveis</strong> como "animal" ou "voador": o significado emerge do vetor como um todo (50, 100, 300, 768, 1536 dimensões...).</p>
+
+  <h3>Como uma palavra vira vetor</h3>
+  <div class="prose">
+    <p>No <strong>Word2Vec</strong>, uma rede neural é treinada para prever uma palavra a partir das palavras ao redor. Nos textos "o cachorro brinca no parque / o gato brinca no parque / o cachorro corre no jardim / ...", <em>cachorro</em> e <em>gato</em> aparecem em contextos parecidos, então ganham vetores parecidos.</p>
+  </div>
+  <div class="callout warn">
+    <span class="tag">Detalhe cobrado</span>
+    <p>Os vetores <strong>não são calculados contando</strong> quantas vezes as palavras aparecem juntas. São <strong>parâmetros aprendidos</strong> durante o treinamento.</p>
+  </div>
+
+  <h3>Estático × contextualizado</h3>
+  <div class="scroller"><table>
+    <thead><tr><th></th><th>Estáticos</th><th>Contextualizados</th></tr></thead>
+    <tbody>
+      <tr><td>Exemplos</td><td>Word2Vec, GloVe</td><td>Transformers, como o BERT</td></tr>
+      <tr><td>Representação</td><td>Em geral, um vetor por palavra</td><td>Pode variar conforme o contexto</td></tr>
+      <tr><td>Diferencia sentidos</td><td>Não diretamente ("banco" tem o mesmo vetor nas duas frases)</td><td>Sim, em geral</td></tr>
+      <tr><td>Uso</td><td>Similaridade entre palavras, recursos para modelos</td><td>Compreensão contextual, classificação, extração de informação</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Aplicações</h3>
+  <ul class="prose">
+    <li><strong>Busca semântica</strong>: "como limpar o sofá" encontra "Técnicas de higienização de estofados", sem nenhuma palavra em comum, porque a pergunta inteira vira um vetor e se procuram páginas com vetores próximos.</li>
+    <li>Recomendação, classificação de textos, análise de sentimentos.</li>
+  </ul>
+</section>
+
+<!-- ============ COSSENO ============ -->
+<section id="cosseno">
+  <h2><span class="num">PLN II · laboratório</span>Comparando vetores: similaridade de cosseno</h2>
+  <div class="formula">cos(A,B) = (A · B) / (‖A‖ · ‖B‖)</div>
+  <div class="prose">
+    <p><code>A · B</code> é o <strong>produto escalar</strong> (soma dos produtos componente a componente) e <code>‖A‖</code> é a <strong>norma</strong> (comprimento) do vetor. O cosseno compara a <em>orientação</em>, não o tamanho. Próximo de <strong>1</strong>: mesma direção; próximo de <strong>0</strong>: vetores ortogonais, sem relação; próximo de <strong>−1</strong>: direções opostas.</p>
+  </div>
+  <div class="lab" id="labcos">
+    <div class="lab-head"><h3>Calculadora de cosseno</h3>
+      <div class="segmented" role="group" aria-label="Exemplos">
+        <button class="seg" data-v="3,4|6,8">Caso 1: mesma direção</button>
+        <button class="seg" data-v="3,0|0,4">Caso 2: ortogonais</button>
+        <button class="seg" data-v="1,2|-1,-2">Opostos</button>
+        <button class="seg" data-v="0.82,0.71,0.15|0.79,0.74,0.18">carro × automóvel</button>
+        <button class="seg" data-v="0.82,0.71,0.15|0.12,0.21,0.91">carro × banana</button>
+      </div>
+    </div>
+    <div class="fields">
+      <div class="field"><label for="va">Vetor A</label><input id="va" type="text" value="3, 4"></div>
+      <div class="field"><label for="vb">Vetor B</label><input id="vb" type="text" value="6, 8"></div>
+    </div>
+    <div class="readout" id="cosout"></div>
+  </div>
+
+  <h3>O mapa de 2 dimensões do slide</h3>
+  <p class="prose">Eixo X: animal (0) → máquina (10). Eixo Y: terrestre (0) → voador (10). Cachorro [1,1], Pássaro [1,9], Carro [9,1], Avião [9,9]. Escolha duas palavras:</p>
+  <div class="lab" id="labmap">
+    <div class="lab-body">
+      <div>
+        <svg viewBox="0 0 240 240" width="100%" role="img" aria-label="Mapa com cachorro, pássaro, carro e avião" style="max-width:360px">
+          <rect x="20" y="10" width="210" height="210" fill="var(--surface-2)" stroke="var(--line)"/>
+          <g id="mapPts"></g>
+          <text x="125" y="236" text-anchor="middle" font-size="9" fill="var(--ink-soft)">animal → máquina</text>
+          <text x="8" y="115" font-size="9" fill="var(--ink-soft)" transform="rotate(-90 8 115)" text-anchor="middle">terrestre → voador</text>
+        </svg>
+      </div>
+      <div>
+        <div class="fields">
+          <div class="field"><label for="w1">Palavra 1</label><select id="w1"></select></div>
+          <div class="field"><label for="w2">Palavra 2</label><select id="w2"></select></div>
+        </div>
+        <div class="readout" id="mapout"></div>
+      </div>
+    </div>
+    <p class="hint" style="margin-top:12px">Repare: cachorro [1,1] e avião [9,9] têm cosseno <strong>1,00</strong> (mesma direção), embora estejam em cantos opostos do mapa. O cosseno ignora a magnitude e olha só o ângulo. Por isso, ao comparar embeddings, o cosseno é uma escolha comum, mas não é a única medida de distância.</p>
+  </div>
+</section>
+
+<!-- ============ WORD2VEC ============ -->
+<section id="word2vec">
+  <h2><span class="num">PLN II · Python</span>Explorando embeddings com Word2Vec (gensim)</h2>
+<pre><i># pip install gensim</i>
+<b>from</b> gensim.models <b>import</b> Word2Vec
+
+frases = [
+    ["o","cachorro","corre","no","parque"],  ["o","gato","corre","no","jardim"],
+    ["o","cachorro","brinca","no","jardim"], ["o","gato","brinca","no","parque"],
+    ["o","carro","anda","na","estrada"],     ["o","ônibus","anda","na","rodovia"],
+    ["o","carro","é","um","veículo"],        ["o","ônibus","é","um","veículo"],
+]
+
+modelo = Word2Vec(
+    sentences=frases,   <i># lista de frases (cada frase = lista de tokens)</i>
+    vector_size=20,     <i># dimensionalidade do vetor de cada palavra</i>
+    window=3,           <i># 3 palavras antes e 3 depois do termo alvo</i>
+    min_count=1,        <i># ignora palavras com menos aparições que isso</i>
+    workers=1,          <i># threads de treinamento</i>
+    seed=42             <i># semente: resultados reprodutíveis</i>
+)
+
+modelo.wv["cachorro"]                         <i># vetor aprendido</i>
+modelo.wv.similarity("cachorro", "gato")      <i># similaridade de cosseno</i>
+modelo.wv.most_similar("cachorro", topn=3)    <i># vizinhos mais próximos</i></pre>
+  <div class="scroller"><table>
+    <thead><tr><th>Parâmetro</th><th>O que controla</th><th>Observações do slide</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">vector_size</td><td>Dimensões do embedding</td><td>Corpus pequeno (até ~100 mil palavras): 10–50. Médio: 100–200. Grande (dezenas de milhões a bilhões): ~300.</td></tr>
+      <tr><td class="mono">window</td><td>Distância máxima entre palavra-alvo e vizinhas</td><td>window=3 → 3 antes e 3 depois.</td></tr>
+      <tr><td class="mono">min_count</td><td>Frequência mínima para entrar no vocabulário</td><td>1 mantém tudo; em projetos reais não é recomendado (raros e erros de digitação viram ruído).</td></tr>
+      <tr><td class="mono">workers</td><td>Threads de treinamento</td><td>Mais threads = mais rápido.</td></tr>
+      <tr><td class="mono">seed</td><td>Semente aleatória</td><td>Fixar torna o treino reprodutível.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn">
+    <span class="tag">Cuidado</span>
+    <p>Esse corpus de 8 frases é minúsculo: os vetores são pouco confiáveis e os resultados variam com os dados e a configuração.</p>
+  </div>
+</section>
+
+<!-- ============ TRANSFORMERS ============ -->
+<section id="transformers">
+  <h2><span class="num">PLN II</span>Transformers</h2>
+  <div class="scroller"><table>
+    <thead><tr><th>Técnica</th><th>O que faz</th><th>Principal limitação</th></tr></thead>
+    <tbody>
+      <tr><td>Bag of Words</td><td>Representa palavras por suas ocorrências</td><td>Não representa bem ordem nem significado</td></tr>
+      <tr><td>TF-IDF</td><td>Pesa palavras pela importância nos documentos</td><td>Não compreende o contexto semântico</td></tr>
+      <tr><td>Embeddings</td><td>Palavras/elementos como vetores</td><td>Os estáticos não representam todos os sentidos de uma palavra em contextos diferentes</td></tr>
+      <tr><td><strong>Transformers</strong></td><td>Processam sequências considerando relações contextuais entre seus elementos</td><td>Exigem treinamento e recursos computacionais; não garantem compreensão perfeita</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose">
+    <p>Em "O banco estava cheio de <em>pessoas</em>" × "O banco estava cheio de <em>dinheiro</em>", BoW/TF-IDF não resolvem a ambiguidade e um embedding estático pode dar vetor semelhante ao "banco" nos dois casos; um modelo com <strong>representações contextuais</strong> produz representações diferentes conforme as outras palavras.</p>
+    <p>Um <strong>Transformer</strong> é uma arquitetura de rede neural para processar sequências (especialmente texto), que ganhou destaque pelo mecanismo de <strong>atenção</strong>. Foi apresentada no artigo <em>Attention Is All You Need</em> (2017) e é a base de muitos LLMs.</p>
+  </div>
+  <div class="callout key">
+    <span class="tag">Fluxo conceitual</span>
+    <p class="mono" style="margin:0">Texto → Tokenização → Representações numéricas → Atenção → Processamento neural → Saída</p>
+  </div>
+  <p class="prose">Tokens <strong>não são necessariamente palavras inteiras</strong>: podem ser parte de uma palavra, pontuação ou outro fragmento.</p>
+</section>
+
+<!-- ============ ATENÇÃO ============ -->
+<section id="atencao">
+  <h2><span class="num">PLN II · laboratório</span>Mecanismo de atenção</h2>
+  <div class="prose">
+    <p>Em "O animal não atravessou a rua porque <strong>ele</strong> estava cansado", para interpretar "ele" é preciso ligá-lo a "animal". A <strong>self-attention</strong> deixa cada token olhar para todos os outros da sequência e atribuir pesos diferentes. Os pesos vêm das representações aprendidas, não de regras gramaticais programadas.</p>
+    <h3>Query, Key e Value</h3>
+  </div>
+  <div class="scroller"><table>
+    <thead><tr><th>Elemento</th><th>Intuição</th><th>Função</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Query (Q)</strong></td><td>O que estou procurando?</td><td>O que o token quer identificar nos demais</td></tr>
+      <tr><td><strong>Key (K)</strong></td><td>O que posso oferecer?</td><td>Características para calcular a compatibilidade com uma Query</td></tr>
+      <tr><td><strong>Value (V)</strong></td><td>Qual informação carrego?</td><td>A informação que será combinada com a dos outros tokens</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">Analogia da biblioteca (só ilustrativa): Query = a pergunta ao bibliotecário; Key = as informações que identificam cada livro; Value = o conteúdo do livro. Na prática, Q, K e V são <strong>vetores numéricos aprendidos</strong>, obtidos por três transformações do embedding de entrada: <code>Q = X·W<sub>Q</sub></code>, <code>K = X·W<sub>K</sub></code>, <code>V = X·W<sub>V</sub></code>, com matrizes de pesos aprendidas no treino.</p>
+
+  <div class="formula">Atenção(Q,K,V) = softmax( Q·Kᵀ / √d<sub>k</sub> ) · V</div>
+  <div class="prose">
+    <ol>
+      <li><strong>Compatibilidade</strong>: produto escalar entre a Query do token e a Key de cada token.</li>
+      <li><strong>Escala e softmax</strong>: divide por √d<sub>k</sub> (d<sub>k</sub> = dimensão das Keys) e aplica softmax, que transforma os valores em pesos que somam 1.</li>
+      <li><strong>Combinação</strong>: soma dos vetores Value ponderada pelos pesos, <code>z = Σ pesoᵢ · Vᵢ</code>.</li>
+      <li><strong>Resultado</strong>: uma representação nova, <em>contextualizada</em>, do token.</li>
+    </ol>
+  </div>
+
+  <div class="lab" id="labatt">
+    <div class="lab-head"><h3>Atenção do token "ele"</h3></div>
+    <p class="hint">Compatibilidades do slide (valores ilustrativos): O 0,2 · animal 2,8 · atravessou 0,5 · rua 0,7 · cansado 1,9. Edite as compatibilidades, os Values (2 dimensões, fictícios) e d<sub>k</sub>.</p>
+    <div class="slider" style="max-width:340px;margin-bottom:12px"><span class="lbl">d<sub>k</sub> (dimensão das Keys)</span><input id="attdk" type="range" min="1" max="64" step="1" value="4"><output></output></div>
+    <div class="scroller" style="margin-top:0"><table style="min-width:0" id="atttab"></table></div>
+    <div class="readout" id="attout"></div>
+    <p class="hint" style="margin-top:12px"><strong>Leitura correta do peso:</strong> 55 % de atenção em "animal" <em>não</em> significa 55 % de certeza de que "ele" = "animal". Significa que o Value de "animal" contribui com 55 % do resultado. Os pesos do slide (0,05 / 0,55 / 0,10 / 0,10 / 0,20) são ilustrativos e não saem exatamente destas contas; aqui o softmax é calculado de verdade.</p>
+  </div>
+</section>
+
+<!-- ============ FAMÍLIAS ============ -->
+<section id="familias">
+  <h2><span class="num">PLN II</span>Famílias de Transformers: encoder e decoder</h2>
+  <div class="prose">
+    <p><strong>Encoder</strong>: recebe o texto e constrói representações contextualizadas (entender). <strong>Decoder</strong>: usa o que tem disponível para produzir uma sequência de saída, em geral um token de cada vez (gerar).</p>
+  </div>
+  <div class="scroller"><table>
+    <thead><tr><th>Família</th><th>Como atua</th><th>Uso típico</th><th>Exemplo</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Encoder-only</strong></td><td>Analisa o contexto considerando as relações entre os tokens</td><td>Classificação e compreensão textual, entidades, sentimentos</td><td>BERT</td></tr>
+      <tr><td><strong>Decoder-only</strong></td><td>Processa o contexto disponível para prever o próximo token (atenção causal)</td><td>Geração de texto, chatbots, código</td><td>GPT</td></tr>
+      <tr><td><strong>Encoder-decoder</strong></td><td>O encoder processa a entrada e o decoder produz a saída</td><td>Tradução e transformação de textos</td><td>T5</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ BLOCOS ============ -->
+<section id="blocos">
+  <h2><span class="num">PLN II</span>Posição, múltiplas cabeças, bloco e máscara</h2>
+  <div class="prose">
+    <h3>Positional encoding</h3>
+    <p>O Transformer não processa os tokens um por vez, então precisa de <strong>informação posicional</strong> somada à representação de cada token. Sem ela, "O cachorro perseguiu o gato" e "O gato perseguiu o cachorro" seriam indistinguíveis.</p>
+    <h3>Multi-head attention</h3>
+    <p>Vários mecanismos de atenção <strong>em paralelo</strong>, cada cabeça com suas próprias transformações de Q, K e V. Uma palavra se relaciona com as outras de várias formas ao mesmo tempo ("ele" precisa do referente, o verbo do sujeito, a vizinhança importa); uma única atenção obrigaria a fazer concessões. Os resultados das cabeças são combinados.</p>
+    <h3>Bloco Transformer</h3>
+    <ul>
+      <li><strong>Multi-Head Attention</strong>: relaciona informações entre os tokens.</li>
+      <li><strong>Residual connection</strong>: soma a entrada original ao resultado da subcamada.</li>
+      <li><strong>Layer normalization</strong>: estabiliza o processamento e o treinamento.</li>
+      <li><strong>Feed-forward network</strong>: transformações adicionais nas representações.</li>
+      <li>Os blocos são <strong>empilhados</strong> para formar redes mais profundas.</li>
+    </ul>
+    <h3>Máscara causal</h3>
+    <p>Em modelos que geram texto (GPT), o token não pode consultar tokens futuros. A <strong>máscara de atenção causal</strong> permite olhar só para trás, e isso viabiliza a geração <strong>autoregressiva</strong>.</p>
+  </div>
+  <div class="lab" id="labmask">
+    <div class="lab-head"><h3>Máscara causal</h3>
+      <div class="segmented" role="group" aria-label="Tipo de atenção">
+        <button class="seg" data-mask="causal" aria-pressed="true">Decoder (causal)</button>
+        <button class="seg" data-mask="full" aria-pressed="false">Encoder (completa)</button>
+      </div>
+    </div>
+    <div class="field"><label for="mtok">Tokens</label><input id="mtok" type="text" value="Hoje está fazendo calor"></div>
+    <div class="scroller"><table style="min-width:0" id="masktab"></table></div>
+    <p class="hint">Linha = token que está sendo processado; coluna = token que ele pode consultar. ✅ permitido, ⛔ bloqueado.</p>
+  </div>
+</section>
+
+<!-- ============ LLM ============ -->
+<section id="llm">
+  <h2><span class="num">PLN II</span>LLMs: aprendizado e geração</h2>
+  <div class="prose">
+    <p>Um <strong>LLM (Large Language Model)</strong> é um modelo treinado com grandes quantidades de texto para identificar padrões e relações na linguagem; tem milhões ou bilhões de parâmetros e consegue gerar, resumir, classificar e transformar textos. Muitos usam Transformers.</p>
+    <h3>Como aprende</h3>
+    <ul>
+      <li><strong>Pré-treinamento (pre-training)</strong>: recebe enormes volumes de texto, aprende relações entre tokens e ajusta os parâmetros para melhorar suas previsões.</li>
+      <li><strong>Fine-tuning</strong>: treinamento adicional para tarefas ou comportamentos específicos.</li>
+      <li><strong>Instruction tuning</strong>: adaptação para seguir instruções do usuário.</li>
+    </ul>
+    <h3>Como gera uma resposta (autoregressiva)</h3>
+    <ol>
+      <li>Recebe o prompt e faz a tokenização.</li>
+      <li>Processa os tokens com a arquitetura Transformer.</li>
+      <li>Calcula probabilidades para os possíveis próximos tokens.</li>
+      <li>Seleciona um token, o adiciona à sequência e repete.</li>
+    </ol>
+  </div>
+  <div class="lab" id="labgen">
+    <div class="lab-head"><h3>Próximo token para "O Brasil é conhecido por…"</h3>
+      <div class="segmented" role="group" aria-label="Estratégia">
+        <button class="seg" data-gen="greedy" aria-pressed="false">Sempre o mais provável</button>
+        <button class="seg" data-gen="sample" aria-pressed="true">Sortear pela probabilidade</button>
+      </div>
+    </div>
+    <p class="hint">Probabilidades ilustrativas do slide: suas 45 % · seu 25 % · ter 20 % · outras 10 %.</p>
+    <div id="genbars"></div>
+    <div class="ctrls"><button class="ctrl" id="gen1">Gerar 1 token</button><button class="ctrl ghost" id="gen200">Gerar 200 vezes</button><button class="ctrl ghost" id="genreset">Zerar</button></div>
+    <p class="note" id="genout" style="margin-top:12px">O Brasil é conhecido por …</p>
+  </div>
+</section>
+
+<!-- ============ RAG ============ -->
+<section id="rag">
+  <h2><span class="num">PLN II</span>RAG: Geração Aumentada por Recuperação</h2>
+  <div class="prose">
+    <p>Um LLM só conhece o que viu no treinamento. Para responder com <strong>informações específicas</strong> (documentos internos, manuais, apostilas, bases atualizadas), usa-se <strong>RAG</strong>: o modelo consulta informações externas antes de responder.</p>
+  </div>
+  <div class="scroller"><table>
+    <thead><tr><th>Fase</th><th>Passos</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1. Preparar a base de conhecimento</strong></td><td>Carregar os documentos → dividir em trechos (<em>chunks</em>) → transformar cada trecho em embedding → guardar os vetores num <strong>banco de dados vetorial</strong></td></tr>
+      <tr><td><strong>2. Recuperar e gerar</strong></td><td>Usuário pergunta → pergunta vira embedding → busca dos trechos mais relevantes (vetores próximos) → trechos + pergunta vão ao LLM → o modelo responde usando esse contexto</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout key">
+    <span class="tag">Onde os embeddings entram</span>
+    <p>No RAG, os embeddings servem para a <strong>recuperação</strong>: o cosseno entre o vetor da pergunta e o dos chunks decide quais trechos chegam ao LLM.</p>
+  </div>
+
+  <h3>Bibliotecas Python</h3>
+  <div class="scroller"><table>
+    <thead><tr><th>Biblioteca</th><th>Finalidade</th><th>Exemplo</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">NLTK</td><td>Processamento básico e ensino de PLN</td><td>Tokenização, stopwords, stemming</td></tr>
+      <tr><td class="mono">spaCy</td><td>Análise linguística</td><td>Lematização, entidades</td></tr>
+      <tr><td class="mono">scikit-learn</td><td>Representação numérica e ML</td><td>TF-IDF, classificação de sentimentos</td></tr>
+      <tr><td class="mono">sentence-transformers</td><td>Embeddings de sentenças e documentos</td><td>Busca semântica, similaridade</td></tr>
+      <tr><td class="mono">transformers</td><td>Modelos de linguagem pré-treinados</td><td>Classificação, perguntas e respostas</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ COMPARATIVO ============ -->
+<section id="comparativo">
+  <h2><span class="num">Aula 12 · fechamento</span>Qual técnica usar</h2>
+  <div class="scroller"><table>
+    <thead><tr><th>Aplicação</th><th>Bag of Words</th><th>TF-IDF</th><th>Embeddings</th></tr></thead>
+    <tbody>
+      <tr><td>Classificação de spam</td><td>Sim</td><td>Sim, muito útil</td><td>Sim</td></tr>
+      <tr><td>Análise de sentimentos</td><td>Sim, como baseline</td><td>Sim</td><td>Sim, em tarefas complexas</td></tr>
+      <tr><td>Busca por palavras-chave</td><td>Sim</td><td>Muito útil</td><td>Complementar</td></tr>
+      <tr><td>Busca semântica</td><td>Limitado</td><td>Limitado</td><td>Muito indicado</td></tr>
+      <tr><td>Classificação de documentos</td><td>Sim</td><td>Muito útil</td><td>Muito útil</td></tr>
+      <tr><td>Textos semelhantes</td><td>Sobreposição de palavras</td><td>Similaridade dos vetores</td><td>Similaridade semântica</td></tr>
+      <tr><td>Perguntas e respostas com LLMs</td><td>Não usual</td><td>Não usual</td><td>Muito utilizado</td></tr>
+      <tr><td>RAG</td><td>Pode servir na recuperação</td><td>Pode servir na recuperação</td><td>Muito utilizado</td></tr>
+      <tr><td>Poucos recursos computacionais</td><td>Muito indicado</td><td>Muito indicado</td><td>Depende do modelo</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Stemming, lematização e stopwords: quando usar</h3>
+  <div class="scroller"><table>
+    <thead><tr><th>Aplicação</th><th>Possível escolha</th></tr></thead>
+    <tbody>
+      <tr><td>Busca simples por palavras relacionadas</td><td>Stemming ou lematização</td></tr>
+      <tr><td>Classificação de documentos</td><td>Avaliar se stopwords ajudam ou prejudicam</td></tr>
+      <tr><td>Análise de sentimentos</td><td>Cuidado com stopwords como "não" e "nunca"</td></tr>
+      <tr><td>Análise linguística</td><td>Lematização e análise gramatical</td></tr>
+      <tr><td>Modelos Transformer</td><td>Em geral usam tokenizadores próprios, sem essas etapas tradicionais</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">Combinações: stopwords + stemming (buscas e classificações), stopwords + lematização (texto simplificado e interpretável). Stemming + lematização é possível, mas em geral <strong>redundante</strong>.</p>
+</section>
+
+<section id="autoteste">
+  <h2><span class="num">Último passo</span>Autoteste</h2>
+  <p class="prose">Responda de cabeça e só então clique para conferir.</p>
+  <div class="cards" id="cards"></div>
+  <div class="pager"><a href="genetico.html">← Algoritmos genéticos</a><a href="visao.html">Visão computacional →</a></div>
+</section>
+
+</main>
+</div>
+
+<footer>
+  <p>Fonte: slides "Introdução ao PLN" (aula 12) e "PLN parte II". Bibliografia: Russell &amp; Norvig, <em>Inteligência Artificial: Uma Abordagem Moderna</em>, 2022.</p>
+</footer>
+</div>
+
+<script src="comum.js"></script>
+<script>
+(function(){
+  "use strict";
+  ligarSliders();
+  sumarioAtivo();
+  var $ = function(id){ return document.getElementById(id); };
+  var fmt = function(x, d){ return (Math.round(x * Math.pow(10, d)) / Math.pow(10, d)).toString().replace(".", ","); };
+  function esc(s){ return String(s).replace(/[&<>]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
+  function chips(arr, cls){
+    return arr.length ? arr.map(function(t){ return '<span class="chip ' + (cls || "") + '">' + esc(t) + '</span>'; }).join("") : '<span class="note">(vazio)</span>';
+  }
+  function ligaExemplos(sel, attr, fn){
+    document.querySelectorAll(sel).forEach(function(b){ b.onclick = function(){ fn(b.getAttribute(attr)); }; });
+  }
+
+  /* ============ pré-processamento ============ */
+  var STOP = "a o as os um uma uns umas de do da dos das em no na nos nas para por com e ou mas que ele ela eles elas nós eu você vocês é foi são ser esse essa isso este esta isto se ao aos à às nem não nunca muito".split(" ");
+  var NEG = ["não", "nunca", "nem"];
+  var LEMAS = { gatos:"gato", gato:"gato", meninas:"menina", menina:"menina", estudando:"estudar", estudou:"estudar", estudaram:"estudar",
+    estuda:"estudar", estudar:"estudar", estudante:"estudante", melhores:"bom", melhor:"bom", "são":"ser ou são (depende do contexto)", foi:"ir ou ser (depende do contexto)",
+    alunos:"aluno", aluno:"aluno", computadores:"computador", "programação":"programação", gostei:"gostar", adorei:"adorar", filme:"filme", filmes:"filme", bom:"bom" };
+  var SUF = ["amentos","imentos","amento","imento","mente","ações","ação","ando","endo","indo","aram","eram","iram","ante","ente","ados","adas","idos","idas","ado","ada","ido","ida","ava","ou","ei","ar","er","ir","as","es","os","is","a","e","o","s"];
+  function stem(p){
+    for (var i = 0; i < SUF.length; i++){
+      var s = SUF[i];
+      if (p.length - s.length >= 3 && p.slice(-s.length) === s) return p.slice(0, -s.length);
+    }
+    return p;
+  }
+  function tokenizar(txt, minus, semPunc){
+    if (minus) txt = txt.toLowerCase();
+    var re = semPunc ? /[\p{L}\p{N}]+/gu : /[\p{L}\p{N}]+|[^\s\p{L}\p{N}]/gu;
+    return txt.match(re) || [];
+  }
+  function prep(){
+    var txt = $("ptxt").value, toks = tokenizar(txt, $("pLow").checked, $("pPunc").checked);
+    var original = toks.slice(), removidas = [];
+    if ($("pStop").checked){
+      var prot = $("pNeg").checked;
+      toks = toks.filter(function(t){
+        var l = t.toLowerCase(), eh = STOP.indexOf(l) >= 0;
+        if (eh && prot && NEG.indexOf(l) >= 0) return true;
+        if (eh) removidas.push(t);
+        return !eh;
+      });
+    }
+    $("pTok").innerHTML = chips(toks, "done");
+    $("pStem").innerHTML = chips(toks.map(function(t){ return stem(t.toLowerCase()); }));
+    $("pLem").innerHTML = chips(toks.map(function(t){ var l = t.toLowerCase(); return LEMAS[l] || l; }));
+    var al = [];
+    var tinhaNeg = original.some(function(t){ return NEG.indexOf(t.toLowerCase()) >= 0; });
+    var temNeg = toks.some(function(t){ return NEG.indexOf(t.toLowerCase()) >= 0; });
+    if (tinhaNeg && !temNeg) al.push("⚠ A negação foi removida: “Eu não gostei do filme” vira algo que lembra “gostei do filme” e o sentido se inverte.");
+    if (removidas.length) al.push("Stopwords removidas: " + removidas.join(", ") + ".");
+    if (!$("pPunc").checked && /[\u{1F300}-\u{1FAFF}!?]/u.test(txt)) al.push("Pontuação e emojis mantidos como tokens: podem carregar sentimento.");
+    $("pAl").innerHTML = al.length ? al.join("<br>") : "Nada a destacar.";
+  }
+  ["ptxt","pLow","pPunc","pStop","pNeg"].forEach(function(id){ $(id).addEventListener("input", prep); $(id).addEventListener("change", prep); });
+  ligaExemplos("#labprep [data-ex]", "data-ex", function(v){
+    $("ptxt").value = v;
+    if (v.indexOf("não") >= 0){ $("pStop").checked = true; $("pNeg").checked = false; }
+    prep();
+  });
+  prep();
+
+  /* ============ BoW / TF-IDF ============ */
+  function tfidf(){
+    var docs = $("tfdocs").value.split(/\n/).map(function(l){ return l.trim(); }).filter(Boolean).slice(0, 6);
+    if (docs.length < 1){ $("tfout").innerHTML = '<p class="note">Escreva pelo menos um documento.</p>'; return; }
+    var toks = docs.map(function(d){ return tokenizar(d, true, true); });
+    var vocab = [];
+    toks.forEach(function(t){ t.forEach(function(w){ if (vocab.indexOf(w) < 0) vocab.push(w); }); });
+    var N = docs.length;
+    var df = vocab.map(function(w){ return toks.filter(function(t){ return t.indexOf(w) >= 0; }).length; });
+    var cnt = toks.map(function(t){ return vocab.map(function(w){ return t.filter(function(x){ return x === w; }).length; }); });
+    var idf = df.map(function(d){ return Math.log10(N / d); });
+    var tfv = toks.map(function(t, di){ return vocab.map(function(w, wi){ return t.length ? cnt[di][wi] / t.length : 0; }); });
+    var tfi = tfv.map(function(row){ return row.map(function(v, wi){ return v * idf[wi]; }); });
+    var h = '<h4>Bag of Words (contagens)</h4><div class="scroller"><table style="min-width:0"><thead><tr><th>Doc</th>' +
+      vocab.map(function(w){ return '<th>' + esc(w) + '</th>'; }).join("") + '</tr></thead><tbody>' +
+      cnt.map(function(r, i){ return '<tr><td>Doc ' + (i+1) + '</td>' + r.map(function(v){ return '<td class="num">' + v + '</td>'; }).join("") + '</tr>'; }).join("") + '</tbody></table></div>';
+    h += '<h4>IDF = log₁₀(N / df), com N = ' + N + '</h4><div class="scroller"><table style="min-width:0"><thead><tr><th></th>' +
+      vocab.map(function(w){ return '<th>' + esc(w) + '</th>'; }).join("") + '</tr></thead><tbody>' +
+      '<tr><td>df</td>' + df.map(function(v){ return '<td class="num">' + v + '</td>'; }).join("") + '</tr>' +
+      '<tr><td>IDF</td>' + idf.map(function(v){ return '<td class="num">' + fmt(v, 3) + '</td>'; }).join("") + '</tr></tbody></table></div>';
+    h += '<h4>TF-IDF (TF = contagem / nº de palavras do doc)</h4><div class="scroller"><table style="min-width:0"><thead><tr><th>Doc</th>' +
+      vocab.map(function(w){ return '<th>' + esc(w) + '</th>'; }).join("") + '</tr></thead><tbody>' +
+      tfi.map(function(r, i){
+        var mx = Math.max.apply(null, r);
+        return '<tr><td>Doc ' + (i+1) + ' <span class="note">(' + toks[i].length + ' palavras)</span></td>' + r.map(function(v){
+          return '<td class="num"' + (v === mx && mx > 0 ? ' style="background:var(--accent-soft);font-weight:700"' : '') + '>' + fmt(v, 3) + '</td>'; }).join("") + '</tr>'; }).join("") +
+      '</tbody></table></div><p class="hint">Em destaque, a palavra de maior peso de cada documento.</p>';
+    /* detecta BoW idênticos */
+    var iguais = [];
+    for (var a = 0; a < N; a++) for (var b = a + 1; b < N; b++) if (cnt[a].join() === cnt[b].join()) iguais.push([a+1, b+1]);
+    if (iguais.length) h += '<div class="callout warn"><span class="tag">Mesmo vetor!</span><p>' + iguais.map(function(p){ return 'Doc ' + p[0] + ' e Doc ' + p[1]; }).join("; ") +
+      ' têm exatamente a mesma representação BoW, ainda que o texto seja diferente: o BoW não guarda a ordem.</p></div>';
+    $("tfout").innerHTML = h;
+  }
+  $("tfdocs").addEventListener("input", tfidf);
+  ligaExemplos("#labtf [data-corpus]", "data-corpus", function(v){ $("tfdocs").value = v; tfidf(); });
+  tfidf();
+
+  /* ============ cosseno ============ */
+  function vec(s){ return s.split(/[\s,;]+/).filter(Boolean).map(function(x){ return parseFloat(x.replace(",", ".")); }); }
+  function cosseno(a, b){
+    var dot = 0, na = 0, nb = 0;
+    for (var i = 0; i < a.length; i++){ dot += a[i]*b[i]; na += a[i]*a[i]; nb += b[i]*b[i]; }
+    return { dot:dot, na:Math.sqrt(na), nb:Math.sqrt(nb), cos: (na && nb) ? dot / (Math.sqrt(na)*Math.sqrt(nb)) : NaN };
+  }
+  function renderCos(){
+    var a = vec($("va").value), b = vec($("vb").value);
+    if (!a.length || a.length !== b.length || a.some(isNaN) || b.some(isNaN)){
+      $("cosout").innerHTML = '<p class="note" style="color:var(--bad)">Digite dois vetores numéricos com o mesmo tamanho, separados por vírgula.</p>'; return;
+    }
+    var r = cosseno(a, b);
+    if (isNaN(r.cos)){ $("cosout").innerHTML = '<p class="note">Um dos vetores é nulo; o cosseno não está definido.</p>'; return; }
+    var terms = a.map(function(x, i){ return fmt(x, 3) + "×" + fmt(b[i], 3); }).join(" + ");
+    var interp = r.cos > 0.999 ? "mesma direção" : (r.cos > 0.9 ? "direções muito próximas" : (Math.abs(r.cos) < 0.001 ? "ortogonais (sem relação)" : (r.cos < -0.999 ? "direções opostas" : (r.cos > 0 ? "alguma semelhança" : "tendem a se opor"))));
+    $("cosout").innerHTML =
+      '<div class="row"><span class="k">A · B</span><span class="mono">' + terms + ' = ' + fmt(r.dot, 4) + '</span></div>' +
+      '<div class="row"><span class="k">‖A‖, ‖B‖</span><span class="mono">' + fmt(r.na, 4) + ' e ' + fmt(r.nb, 4) + '</span></div>' +
+      '<div class="row"><span class="k">cos(A,B)</span><span class="mono" style="font-size:1.1rem;color:var(--accent)">' + fmt(r.dot, 4) + ' / (' + fmt(r.na, 4) + ' × ' + fmt(r.nb, 4) + ') = <b>' + fmt(r.cos, 4) + '</b></span></div>' +
+      '<div class="row"><span class="k">Leitura</span><span>' + interp + '</span></div>';
+  }
+  ["va","vb"].forEach(function(id){ $(id).addEventListener("input", renderCos); });
+  ligaExemplos("#labcos [data-v]", "data-v", function(v){ var p = v.split("|"); $("va").value = p[0]; $("vb").value = p[1]; renderCos(); });
+  renderCos();
+
+  /* ============ mapa 2D ============ */
+  var MAPA = { "Cachorro":[1,1], "Pássaro":[1,9], "Carro":[9,1], "Avião":[9,9] };
+  var nomes = Object.keys(MAPA);
+  nomes.forEach(function(n){
+    ["w1","w2"].forEach(function(id, k){ var o = document.createElement("option"); o.textContent = n; $(id).appendChild(o); });
+  });
+  $("w2").selectedIndex = 1;
+  function px(v){ return [20 + v[0]/10*210, 220 - v[1]/10*210]; }
+  function renderMapa(){
+    var a = $("w1").value, b = $("w2").value, h = "";
+    var pa = px(MAPA[a]), pb = px(MAPA[b]);
+    h += '<line x1="' + pa[0] + '" y1="' + pa[1] + '" x2="' + pb[0] + '" y2="' + pb[1] + '" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 3"/>';
+    nomes.forEach(function(n){
+      var p = px(MAPA[n]), sel = (n === a || n === b);
+      h += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="6" fill="' + (sel ? "var(--accent)" : "var(--ink)") + '"/>' +
+           '<text x="' + (p[0] < 120 ? p[0] + 9 : p[0] - 9) + '" y="' + (p[1] + 4) + '" font-size="10" text-anchor="' + (p[0] < 120 ? "start" : "end") + '" fill="var(--ink)">' + n + ' [' + MAPA[n].join(",") + ']</text>';
+    });
+    $("mapPts").innerHTML = h;
+    var r = cosseno(MAPA[a], MAPA[b]), euc = Math.hypot(MAPA[a][0]-MAPA[b][0], MAPA[a][1]-MAPA[b][1]);
+    $("mapout").innerHTML =
+      '<div class="row"><span class="k">Cosseno</span><span class="mono">' + fmt(r.cos, 3) + '</span></div>' +
+      '<div class="row"><span class="k">Distância euclidiana</span><span class="mono">' + fmt(euc, 2) + '</span></div>';
+  }
+  ["w1","w2"].forEach(function(id){ $(id).addEventListener("change", renderMapa); });
+  renderMapa();
+
+  /* ============ atenção ============ */
+  var TK = ["O","animal","atravessou","rua","cansado"], SC = [0.2,2.8,0.5,0.7,1.9];
+  var VAL = [[0.1,0.0],[0.9,0.2],[0.1,0.8],[0.0,0.6],[0.5,0.9]];
+  (function montaTab(){
+    var h = '<thead><tr><th>Token</th><th>Compatibilidade (Q·K)</th><th>Value (2D, fictício)</th></tr></thead><tbody>';
+    TK.forEach(function(t, i){
+      h += '<tr><td>' + t + '</td><td><input type="number" step="0.1" id="sc' + i + '" value="' + SC[i] + '" style="width:80px"></td>' +
+           '<td class="mono">[<input type="number" step="0.1" id="va' + i + 'x" value="' + VAL[i][0] + '" style="width:60px">, <input type="number" step="0.1" id="va' + i + 'y" value="' + VAL[i][1] + '" style="width:60px">]</td></tr>';
+    });
+    $("atttab").innerHTML = h + '</tbody>';
+    $("atttab").addEventListener("input", renderAtt);
+  })();
+  function renderAtt(){
+    var dk = parseFloat($("attdk").value), esc2 = Math.sqrt(dk);
+    var s = TK.map(function(t, i){ return parseFloat($("sc" + i).value) || 0; });
+    var sc = s.map(function(v){ return v / esc2; });
+    var mx = Math.max.apply(null, sc), ex = sc.map(function(v){ return Math.exp(v - mx); }), soma = ex.reduce(function(a,b){ return a+b; }, 0);
+    var w = ex.map(function(v){ return v / soma; });
+    var z = [0, 0];
+    TK.forEach(function(t, i){ z[0] += w[i] * (parseFloat($("va" + i + "x").value) || 0); z[1] += w[i] * (parseFloat($("va" + i + "y").value) || 0); });
+    var h = '<div class="row"><span class="k">÷ √d<sub>k</sub></span><span class="mono">√' + dk + ' = ' + fmt(esc2, 3) + ' → ' + sc.map(function(v){ return fmt(v, 2); }).join(" · ") + '</span></div>';
+    h += '<div class="row"><span class="k">Pesos (softmax)</span><div>' + TK.map(function(t, i){
+      return '<div style="display:grid;grid-template-columns:90px 1fr 56px;gap:8px;align-items:center;margin-bottom:5px"><span class="mono" style="font-size:.78rem">' + t + '</span><div class="bar"><span style="width:' + (w[i]*100) + '%"></span></div><span class="mono" style="font-size:.78rem">' + fmt(w[i]*100, 1) + '%</span></div>';
+    }).join("") + '</div></div>';
+    h += '<div class="row"><span class="k">Soma</span><span class="mono">' + fmt(w.reduce(function(a,b){ return a+b; }, 0), 3) + '</span></div>';
+    h += '<div class="row"><span class="k">z = Σ pesoᵢ·Vᵢ</span><span class="mono">[' + fmt(z[0], 3) + ', ' + fmt(z[1], 3) + ']  — representação contextualizada de “ele”</span></div>';
+    $("attout").innerHTML = h;
+  }
+  $("attdk").addEventListener("input", renderAtt);
+  renderAtt();
+
+  /* ============ máscara ============ */
+  var maskModo = "causal";
+  function renderMask(){
+    var t = $("mtok").value.split(/\s+/).filter(Boolean).slice(0, 8), h = '<thead><tr><th></th>' + t.map(function(x){ return '<th>' + esc(x) + '</th>'; }).join("") + '</tr></thead><tbody>';
+    t.forEach(function(x, i){
+      h += '<tr><td><strong>' + esc(x) + '</strong></td>' + t.map(function(y, j){
+        var ok = maskModo === "full" || j <= i;
+        return '<td style="text-align:center;background:' + (ok ? 'var(--ok-soft)' : 'var(--bad-soft)') + '">' + (ok ? '✅' : '⛔') + '</td>'; }).join("") + '</tr>';
+    });
+    $("masktab").innerHTML = h + '</tbody>';
+  }
+  $("mtok").addEventListener("input", renderMask);
+  document.querySelectorAll("[data-mask]").forEach(function(b){
+    b.onclick = function(){ maskModo = b.getAttribute("data-mask");
+      document.querySelectorAll("[data-mask]").forEach(function(o){ o.setAttribute("aria-pressed", o === b ? "true" : "false"); }); renderMask(); };
+  });
+  renderMask();
+
+  /* ============ geração ============ */
+  var OPC = [["suas",45],["seu",25],["ter",20],["outras",10]], contagem = {}, ultimos = [], genModo = "sample";
+  function barrasGen(){
+    var tot = Object.keys(contagem).reduce(function(a,k){ return a + contagem[k]; }, 0);
+    $("genbars").innerHTML = OPC.map(function(o){
+      var c = contagem[o[0]] || 0, obs = tot ? c / tot * 100 : 0;
+      return '<div style="display:grid;grid-template-columns:70px 1fr 120px;gap:8px;align-items:center;margin-bottom:6px"><span class="mono">' + o[0] + '</span>' +
+        '<div class="bar"><span style="width:' + o[1] + '%"></span></div><span class="mono" style="font-size:.75rem">' + o[1] + '% · sorteado ' + c + (tot ? ' (' + fmt(obs, 0) + '%)' : '') + '</span></div>';
+    }).join("");
+  }
+  function proximoToken(){
+    if (genModo === "greedy") return OPC[0][0];
+    var r = Math.random() * 100, acc = 0;
+    for (var i = 0; i < OPC.length; i++){ acc += OPC[i][1]; if (r < acc) return OPC[i][0]; }
+    return OPC[0][0];
+  }
+  function geraN(n){
+    for (var i = 0; i < n; i++){ var t = proximoToken(); contagem[t] = (contagem[t] || 0) + 1; ultimos.push(t); }
+    $("genout").innerHTML = "O Brasil é conhecido por <b>" + ultimos[ultimos.length - 1] + "</b> … <span style='opacity:.7'>(último token sorteado; o processo se repetiria com a nova sequência)</span>";
+    barrasGen();
+  }
+  $("gen1").onclick = function(){ geraN(1); };
+  $("gen200").onclick = function(){ geraN(200); };
+  $("genreset").onclick = function(){ contagem = {}; ultimos = []; $("genout").textContent = "O Brasil é conhecido por …"; barrasGen(); };
+  document.querySelectorAll("[data-gen]").forEach(function(b){
+    b.onclick = function(){ genModo = b.getAttribute("data-gen");
+      document.querySelectorAll("[data-gen]").forEach(function(o){ o.setAttribute("aria-pressed", o === b ? "true" : "false"); }); };
+  });
+  barrasGen();
+
+  /* ============ flashcards ============ */
+  montarCards("cards", [
+    ["O que é PLN e por que a linguagem humana é difícil para o computador?", "É a área da IA que permite processar, analisar, interpretar e gerar linguagem humana. Dificuldades: ambiguidade (banco), ironia/sarcasmo e variações (gírias, abreviações, emojis)."],
+    ["Quais as 5 etapas do pipeline de PLN?", "Texto de entrada → limpeza/pré-processamento → tokenização → representação numérica → modelo."],
+    ["Por que não remover todas as stopwords sempre?", "Porque algumas mudam o sentido: “Eu não gostei do filme” sem o “não” vira “gostei do filme”. A remoção depende da tarefa (cuidado na análise de sentimentos)."],
+    ["Stemming × lematização?", "Stemming corta sufixos por regras e gera um radical que pode nem ser palavra (estudando → estud). Lematização busca a forma canônica considerando a gramática (estudando → estudar; melhores → bom). A segunda é mais interpretável e exige mais recursos."],
+    ["O que é Bag of Words e qual sua limitação?", "Vocabulário + contagem de cada palavra por texto. É simples, mas ignora a ordem e o significado: “O cachorro mordeu o homem” e “O homem mordeu o cachorro” têm o mesmo vetor."],
+    ["Como se calcula o TF-IDF (versão do slide)?", "TF = ocorrências no doc / nº de palavras do doc. IDF = log₁₀(N / df). TF-IDF = TF × IDF. Palavra presente em todos os documentos tem IDF = 0."],
+    ["No exemplo do slide, por que TF-IDF de “aprende” é 0 e o de “inteligência” é 0,075?", "“aprende” está nos 2 docs: IDF = log₁₀(2/2) = 0. “inteligência” está em 1: IDF = log₁₀(2) = 0,301; TF = 1/4 = 0,25; 0,25 × 0,301 ≈ 0,075."],
+    ["O que BoW e TF-IDF não fazem?", "Não preservam a ordem, não reconhecem sinônimos (carro × automóvel, similaridade 0) e não resolvem a ambiguidade (banco). TF-IDF só adiciona importância estatística no corpus."],
+    ["O que é um embedding?", "Um vetor numérico, aprendido a partir de dados, que representa palavras/frases num espaço multidimensional e captura relações semânticas. As dimensões individuais em geral não são interpretáveis."],
+    ["Os vetores do Word2Vec vêm de contar coocorrências?", "Não. São parâmetros aprendidos: uma rede neural é treinada para prever uma palavra a partir das vizinhas, e os vetores passam a refletir os padrões de uso."],
+    ["Como funciona a similaridade de cosseno e como interpretá-la?", "cos = (A·B)/(‖A‖‖B‖). Perto de 1: mesma direção; perto de 0: ortogonais; perto de −1: opostos. Ignora a magnitude. Ex.: (3,4) e (6,8) → 1; (3,0) e (0,4) → 0."],
+    ["Embedding estático × contextualizado?", "Estático (Word2Vec, GloVe): um vetor por palavra, “banco” igual nas duas frases. Contextualizado (BERT/Transformers): o vetor muda conforme a frase."],
+    ["Para que servem Query, Key e Value?", "Q: o que o token procura; K: o que ele oferece (compara com Q); V: a informação que carrega. Pesos de atenção = softmax(Q·Kᵀ/√dₖ), aplicados a V."],
+    ["O que o softmax faz na atenção? 55 % de atenção em “animal” significa 55 % de certeza?", "Transforma as compatibilidades em pesos que somam 1. Não é certeza: é a fração com que o Value de “animal” contribui para a nova representação de “ele”."],
+    ["Por que dividir por √dₖ?", "É o fator de escala da atenção clássica; evita que os produtos escalares fiquem grandes com dimensões altas e saturem o softmax."],
+    ["Encoder-only, decoder-only e encoder-decoder: exemplos e usos?", "Encoder-only (BERT): entender/classificar. Decoder-only (GPT): gerar texto, prever o próximo token. Encoder-decoder (T5): traduzir/transformar."],
+    ["Para que servem o positional encoding e a máscara causal?", "Positional encoding injeta a posição dos tokens (o Transformer não os lê um a um). Máscara causal impede o token de ver os futuros, permitindo geração autoregressiva."],
+    ["O que o multi-head attention acrescenta?", "Várias atenções em paralelo, cada uma com suas Q/K/V, capturando diferentes relações ao mesmo tempo; os resultados são combinados."],
+    ["Pré-treinamento, fine-tuning e instruction tuning?", "Pré-treino: aprender padrões da linguagem em grandes volumes de texto. Fine-tuning: treino adicional para uma tarefa/comportamento. Instruction tuning: adaptar o modelo a seguir instruções."],
+    ["Como um LLM gera texto?", "De forma autoregressiva: tokeniza o prompt, processa com o Transformer, calcula probabilidades do próximo token, escolhe um, adiciona à sequência e repete."],
+    ["Como funciona o RAG?", "Preparar: documentos → chunks → embeddings → banco vetorial. Responder: pergunta vira embedding → busca dos trechos mais próximos → trechos + pergunta vão ao LLM, que responde com esse contexto."]
+  ]);
+})();
+</script>
+<script src="theme.js" defer></script>
+</body>
+</html>

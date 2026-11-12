@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Simulado de Inteligência Artificial: algoritmos genéticos, PLN e visão computacional, com correção imediata.">
+  <title>Simulado 2 — Genéticos, PLN e Visão</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E📝%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="base.css">
+</head>
+<body>
+<div class="page narrow">
+
+<nav class="topnav" aria-label="Páginas">
+  <a href="index.html">Início</a>
+  <a href="genetico.html">Genéticos</a>
+  <a href="pln.html">PLN</a>
+  <a href="visao.html">Visão</a>
+  <a href="simulado.html">Simulado 1</a>
+  <a href="simulado2.html" aria-current="page">Simulado 2</a>
+</nav>
+
+<header class="masthead">
+  <p class="eyebrow">Simulado 2 · aulas 11, 12, PLN II e 15</p>
+  <h1>Genéticos, PLN e <em>visão</em>.</h1>
+  <p class="lede">Questões sobre os quatro decks novos. Cada alternativa marcada é corrigida na hora, com a explicação do porquê. As discursivas, no fim, trazem o roteiro do que se espera.</p>
+</header>
+
+<div class="scorebar">
+  <div class="track"><span id="bar"></span></div>
+  <div class="tally" id="tally">respondidas <b>0</b>/0</div>
+</div>
+
+<main id="quiz"></main>
+
+<div class="result" id="result">
+  <h3>Resultado</h3>
+  <p class="big" id="pct">—</p>
+  <p id="verdito"></p>
+  <ul class="weak" id="weak"></ul>
+  <div class="actions">
+    <button class="act" id="again">Refazer o simulado</button>
+    <button class="act ghost" id="top">Voltar ao topo</button>
+  </div>
+</div>
+
+<footer>
+  <p>As discursivas não entram no placar. Conteúdo tirado das aulas 11 (algoritmos genéticos), 12 (introdução a PLN), PLN parte II e 15 (visão computacional). Para revisar: <a href="genetico.html">Genéticos</a> · <a href="pln.html">PLN</a> · <a href="visao.html">Visão</a>.</p>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var Q = [
+
+  /* ===================== ALGORITMOS GENÉTICOS ===================== */
+  {parte:"Parte I — Algoritmos genéticos", sub:"Aula 11. Ciclo do AG, fitness, operadores e TSP.", novaParte:true, tipo:"mc",
+   stem:"Qual é a ideia central de um algoritmo genético?",
+   opts:["Soluções mais aptas têm maior chance de ser selecionadas e gerar descendentes, produzindo soluções melhores a cada geração",
+         "Testar todas as soluções possíveis e guardar a de menor custo",
+         "Usar uma heurística admissível para guiar a busca até o objetivo",
+         "Treinar uma rede neural com exemplos rotulados"],
+   ok:0,
+   why:"AG é inspirado na seleção natural: população de soluções, seleção dos mais aptos, cruzamento e mutação. Testar tudo é força bruta; heurística admissível é do A*; rede neural é outro paradigma."},
+
+  {tipo:"mc",
+   stem:"Na analogia entre biologia e AG, o que corresponde a <strong>gene</strong> e a <strong>indivíduo</strong>, respectivamente?",
+   opts:["Parte da solução (ex.: um bit ou uma cidade) e uma solução completa",
+         "Uma solução completa e o conjunto de soluções",
+         "A função de aptidão e a taxa de mutação",
+         "Uma geração e um cromossomo"],
+   ok:0,
+   why:"Gene = parte da solução; indivíduo = uma solução; população = conjunto de soluções; cromossomo = a codificação; geração = uma iteração."},
+
+  {tipo:"mc",
+   stem:"Sobre a função de <strong>fitness</strong>, é correto afirmar:",
+   opts:["Mede a qualidade de uma solução e não é necessariamente a resposta do problema",
+         "É sempre igual à resposta final do problema",
+         "Só pode ser usada em problemas de maximização",
+         "Define a taxa de mutação do algoritmo"],
+   ok:0,
+   why:"Fitness é uma medida de qualidade. Em minimização, usa-se algo como 1/distância, de modo que menor custo gere maior fitness."},
+
+  {tipo:"mc",
+   stem:"No TSP, um indivíduo tem distância total 50 e outro 20. Com <code>fitness = 1/distância</code>, quais são os fitness e qual é mais apto?",
+   opts:["0,020 e 0,050; o de distância 20 é mais apto",
+         "0,020 e 0,050; o de distância 50 é mais apto",
+         "50 e 20; o de distância 50 é mais apto",
+         "0,50 e 0,20; o de distância 20 é mais apto"],
+   ok:0,
+   why:"1/50 = 0,020 e 1/20 = 0,050. Como o objetivo é minimizar a distância, o inverso transforma isso em maximizar o fitness: a rota menor tem o maior fitness."},
+
+  {tipo:"mc",
+   stem:"Na simulação de 4 bits com <code>fitness = x²</code>, qual o fitness de <code>1010</code> e qual indivíduo da população <code>0011, 1010, 1111, 0101</code> é o mais apto?",
+   opts:["100; o <code>1111</code> (fitness 225)",
+         "10; o <code>1111</code> (fitness 15)",
+         "100; o <code>1010</code>",
+         "20; o <code>0101</code> (fitness 25)"],
+   ok:0,
+   why:"1010 = 10 e 10² = 100. Os fitness são 9, 100, 225 e 25, então o mais apto é 1111 (x = 15, fitness 225)."},
+
+  {tipo:"mc",
+   stem:"Pais <code>1010</code> e <code>1111</code>, crossover de um ponto com corte depois do 3º bit. Quais são os filhos?",
+   opts:["1011 e 1110", "1010 e 1111", "1111 e 1010", "1001 e 1100"],
+   ok:0,
+   why:"Pai 1 = 101|0, Pai 2 = 111|1. Filho 1 = 101 + 1 = 1011; Filho 2 = 111 + 0 = 1110."},
+
+  {tipo:"mc",
+   stem:"Por que o crossover não escolhe simplesmente um dos pais?",
+   opts:["Porque o objetivo é combinar características das soluções existentes",
+         "Porque isso aumentaria demais a taxa de mutação",
+         "Porque os pais sempre têm fitness igual",
+         "Porque a população deixaria de ter tamanho fixo"],
+   ok:0,
+   why:"Copiar um pai não cria nada novo. O crossover recombina genes de dois pais para explorar soluções que nenhum deles tinha."},
+
+  {tipo:"mc",
+   stem:"Qual é o papel principal da mutação?",
+   opts:["Introduzir diversidade e evitar a estagnação da população",
+         "Garantir que o melhor indivíduo seja sempre preservado",
+         "Ordenar a população por fitness",
+         "Eliminar todos os indivíduos de baixo fitness"],
+   ok:0,
+   why:"Como o crossover tende a gerar filhos parecidos, a mutação traz características novas. Garantir o melhor é papel do elitismo."},
+
+  {tipo:"mc",
+   stem:"O que acontece se a taxa de mutação for muito alta?",
+   opts:["As boas características dos pais se perdem e a busca se aproxima de uma busca aleatória",
+         "O algoritmo converge mais rápido para o ótimo",
+         "O fitness de toda a população passa a ser igual",
+         "O elitismo deixa de funcionar, mas o resto não muda"],
+   ok:0,
+   why:"Mutação em excesso destrói o que o crossover e a seleção construíram. Por outro lado, taxa zero pode levar a população a estagnar."},
+
+  {tipo:"mc",
+   stem:"Qual estratégia de seleção usa probabilidade <strong>proporcional ao fitness</strong>?",
+   opts:["Roleta", "Torneio", "Elitismo", "Steady-state"],
+   ok:0,
+   why:"Na roleta (roulette wheel), a fatia de cada indivíduo é fitness/soma. Torneio sorteia alguns e fica com o melhor; elitismo copia os melhores; steady-state é estratégia de substituição."},
+
+  {tipo:"mc",
+   stem:"Na seleção por <strong>torneio</strong>:",
+   opts:["Sorteiam-se alguns indivíduos e seleciona-se o melhor entre eles",
+         "Os indivíduos são ordenados e a probabilidade depende só da posição",
+         "Os melhores passam direto para a próxima geração",
+         "Todos têm exatamente a mesma chance de ser escolhidos"],
+   ok:0,
+   why:"O tamanho do torneio controla a pressão seletiva. A alternativa 2 descreve o ranking; a 3, o elitismo."},
+
+  {tipo:"mc",
+   stem:"Qual o benefício do <strong>elitismo</strong>?",
+   opts:["Garante que as melhores soluções não sejam perdidas por cruzamento ou mutação",
+         "Aumenta a taxa de mutação nas últimas gerações",
+         "Elimina a necessidade de função de fitness",
+         "Faz a população crescer a cada geração"],
+   ok:0,
+   why:"Na substituição geracional pura, filhos podem ser piores que os pais. O elitismo copia o top (1–5 %) intacto para a próxima geração."},
+
+  {tipo:"mc",
+   stem:"Qual o número de rotas possíveis no TSP com 5 cidades (cidade inicial fixa)?",
+   opts:["24", "120", "5", "720"],
+   ok:0,
+   why:"(n − 1)! = 4! = 24. Com n = 4 seriam 3! = 6 rotas, como no exemplo do slide."},
+
+  {tipo:"mc",
+   stem:"Por que a força bruta é inviável no TSP com muitas cidades?",
+   opts:["O espaço de busca cresce de forma fatorial com o número de cidades",
+         "O problema não tem solução ótima",
+         "A distância entre cidades não pode ser calculada",
+         "Algoritmos genéticos são mais rápidos em todas as instâncias pequenas"],
+   ok:0,
+   why:"(n − 1)! explode: 15 cidades ≈ 87 bilhões de rotas (~20 min), 20 cidades ≈ 1,2 × 10¹⁷ (~73 anos). Existe solução ótima, o custo para achá-la é que é proibitivo."},
+
+  {tipo:"mc",
+   stem:"Comparando força bruta e algoritmo genético no TSP:",
+   opts:["A força bruta garante o ótimo se terminar; o AG busca uma solução muito boa, mas não garante a ótima",
+         "Ambos garantem a solução ótima",
+         "O AG garante a ótima e a força bruta não",
+         "Nenhum dos dois pode encontrar a rota ótima"],
+   ok:0,
+   why:"O AG troca garantia de otimalidade por viabilidade de tempo em instâncias grandes."},
+
+  {tipo:"mc",
+   stem:"Por que o crossover de um ponto é problemático no TSP?",
+   opts:["Pode gerar filhos com cidades repetidas e cidades faltando",
+         "Sempre gera rotas idênticas aos pais",
+         "Não pode ser aplicado a listas",
+         "Aumenta o número de cidades do problema"],
+   ok:0,
+   why:"Uma rota é uma permutação. Cortar e colar duas permutações geralmente quebra isso. Por isso se usam PMX ou OX."},
+
+  {tipo:"mc",
+   stem:"Pais <code>P1 = [1,2,3 | 4,5,6,7 | 8,9]</code> e <code>P2 = [9,3,7 | 8,2,6,5 | 1,4]</code>. Aplicando o <strong>OX</strong> para o filho 1 (sub-cadeia de P1), qual é o resultado?",
+   opts:["[3, 8, 2 | 4, 5, 6, 7 | 1, 9]",
+         "[9, 3, 2 | 4, 5, 6, 7 | 1, 8]",
+         "[1, 2, 3 | 4, 5, 6, 7 | 8, 9]",
+         "[3, 4, 7 | 8, 2, 6, 5 | 9, 1]"],
+   ok:0,
+   why:"Genes de P2 a partir do 2º corte: 1,4,9,3,7,8,2,6,5. Sem os da sub-cadeia (4,5,6,7): 1,9,3,8,2. Preenchendo a partir do 2º corte, dando a volta: posições 8, 9, 1, 2, 3 = 1, 9, 3, 8, 2. <span class='ref'>A 2ª alternativa é o filho do PMX; a 4ª, o filho 2 do OX.</span>"},
+
+  {tipo:"mc",
+   stem:"Com os mesmos pais, aplicando o <strong>PMX</strong> para o filho 1, qual é o resultado?",
+   opts:["[9, 3, 2 | 4, 5, 6, 7 | 1, 8]",
+         "[3, 8, 2 | 4, 5, 6, 7 | 1, 9]",
+         "[9, 3, 7 | 4, 5, 6, 7 | 1, 4]",
+         "[1, 7, 3 | 8, 2, 6, 5 | 4, 9]"],
+   ok:0,
+   why:"Mapeamento 4↔8, 5↔2, 6↔6, 7↔5. Posição 1: 9 ok. Posição 2: 3 ok. Posição 3: P2 tem 7, que já está na sub-cadeia → mapeia para 5, que também está → mapeia para 2 → livre. Posição 8: 1 ok. Posição 9: 4 está na sub-cadeia → 8. Resultado [9,3,2 | 4,5,6,7 | 1,8]."},
+
+  {tipo:"mc",
+   stem:"Qual mutação <strong>inverte um trecho</strong> da rota e é a mais eficaz no TSP para desfazer cruzamentos (princípio do 2-opt)?",
+   opts:["Inversion", "Swap", "Insertion", "Elitismo"],
+   ok:0,
+   why:"Inversion vira um trecho contínuo de trás para frente, preservando vizinhanças. Swap troca duas posições; insertion move um elemento deslocando os outros."},
+
+  {tipo:"mc",
+   stem:"Aplicando <strong>swap</strong> nas posições 2 e 6 (B e F) de <code>A B C D E F G</code>, obtém-se:",
+   opts:["A F C D E B G", "A C D E F B G", "A F E D C B G", "A B C D E G F"],
+   ok:0,
+   why:"Swap troca só as duas posições. A 2ª alternativa é insertion; a 3ª, inversion do trecho B..F."},
+
+  {tipo:"mc",
+   stem:"Na substituição <strong>steady-state</strong>:",
+   opts:["Poucos indivíduos são substituídos por vez (ex.: 2 filhos entram no lugar dos 2 piores)",
+         "Toda a população é substituída a cada geração",
+         "Nenhum filho é gerado",
+         "A população é reordenada, mas não muda"],
+   ok:0,
+   why:"Steady-state mantém continuidade: os pais e o resto da população continuam vivos. A substituição geracional troca tudo."},
+
+  {tipo:"mc",
+   stem:"Quais são condições de parada típicas de um AG?",
+   opts:["Número fixo de gerações ou fitness estável por muitas gerações",
+         "Quando a mutação chega a 100 %",
+         "Quando todos os indivíduos são idênticos ao pai 1",
+         "Quando o elitismo é desligado"],
+   ok:0,
+   why:"Parar em um nº de gerações, ou quando o fitness deixa de melhorar por muitas gerações seguidas."},
+
+  /* ===================== PLN ===================== */
+  {parte:"Parte II — Processamento de linguagem natural", sub:"Aulas 12 e PLN II. Pipeline, representação numérica, embeddings, Transformers, LLMs e RAG.", novaParte:true, tipo:"mc",
+   stem:"O que é PLN?",
+   opts:["Área da IA que permite aos computadores processar, analisar, interpretar e gerar linguagem humana",
+         "Área que apenas converte fala em texto",
+         "Técnica exclusiva de tradução automática",
+         "Um tipo de banco de dados para textos"],
+   ok:0,
+   why:"PLN/NLP envolve texto e fala, e tarefas como spam, resumo, sentimentos, tradução e geração de respostas."},
+
+  {tipo:"mc",
+   stem:"“Nossa, que ótimo! Perdi todos os meus arquivos.” ilustra qual dificuldade do PLN?",
+   opts:["Ironia/sarcasmo", "Ambiguidade lexical", "Stemming", "Tokenização"],
+   ok:0,
+   why:"As palavras parecem positivas, mas a intenção é negativa. Ambiguidade seria, por exemplo, “banco”."},
+
+  {tipo:"mc",
+   stem:"Qual a ordem correta do pipeline de PLN?",
+   opts:["Texto de entrada → limpeza/pré-processamento → tokenização → representação numérica → modelo",
+         "Texto de entrada → modelo → tokenização → limpeza → representação numérica",
+         "Tokenização → texto de entrada → representação numérica → limpeza → modelo",
+         "Limpeza → modelo → representação numérica → tokenização"],
+   ok:0,
+   why:"Os modelos precisam de números, então a representação numérica vem antes do modelo; a tokenização divide o texto limpo em tokens."},
+
+  {tipo:"mc",
+   stem:"Por que remover stopwords às cegas pode prejudicar a análise de sentimentos?",
+   opts:["Palavras como “não” mudam o sentido: “Eu não gostei do filme” viraria algo como “gostei do filme”",
+         "Porque stopwords são sempre as palavras mais raras",
+         "Porque aumentam o tamanho do vocabulário",
+         "Porque impedem a tokenização"],
+   ok:0,
+   why:"Stopwords são palavras muito frequentes (artigos, preposições...), mas a remoção deve considerar a tarefa e o contexto."},
+
+  {tipo:"mc",
+   stem:"Qual é a diferença entre stemming e lematização?",
+   opts:["Stemming corta sufixos por regras e pode gerar radicais que não são palavras; lematização busca a forma canônica da palavra",
+         "Stemming usa o contexto gramatical; lematização só remove letras",
+         "São o mesmo processo com nomes diferentes",
+         "Stemming transforma palavras em vetores; lematização, em tokens"],
+   ok:0,
+   why:"estudando → estud (stem) × estudando → estudar (lema). Lematizar costuma exigir mais recursos linguísticos, mas é mais interpretável."},
+
+  {tipo:"mc",
+   stem:"Qual é o lema de “melhores”, segundo o slide?",
+   opts:["bom", "melhor", "melhorar", "mel"],
+   ok:0,
+   why:"“Melhores” é flexão (comparativo/plural) de “bom”. Já “são” tem lema “ser” ou “são”, conforme o contexto."},
+
+  {tipo:"mc",
+   stem:"Com vocabulário <code>[adorei, filme, ruim]</code>, a frase “eu adorei esse filme” em Bag of Words fica:",
+   opts:["[1, 1, 0]", "[0, 1, 1]", "[1, 0, 0]", "[4, 1, 0]"],
+   ok:0,
+   why:"“adorei” aparece (1), “filme” aparece (1), “ruim” não aparece (0). Palavras fora do vocabulário (eu, esse) são ignoradas."},
+
+  {tipo:"mc",
+   stem:"Qual a principal limitação do Bag of Words e do TF-IDF tradicionais ilustrada por “O cachorro mordeu o homem” × “O homem mordeu o cachorro”?",
+   opts:["Não preservam a ordem das palavras: as duas frases têm a mesma representação",
+         "Não conseguem contar palavras",
+         "Só funcionam com frases curtas",
+         "Não admitem vocabulário"],
+   ok:0,
+   why:"As contagens são idênticas (cachorro 1, homem 1, mordeu 1, o 2), mas os significados são diferentes."},
+
+  {tipo:"mc",
+   stem:"Documento 1: “A inteligência artificial aprende.” (4 palavras); Documento 2: “O menino aprende a ler.” Qual o TF-IDF de “inteligência” no Documento 1 (IDF = log₁₀(N/df))?",
+   opts:["≈ 0,075", "0", "0,25", "≈ 0,301"],
+   ok:0,
+   why:"TF = 1/4 = 0,25; IDF = log₁₀(2/1) = 0,301; TF-IDF = 0,25 × 0,301 ≈ 0,075. <span class='ref'>O TF-IDF de “aprende” é 0, pois está nos dois documentos (IDF = log₁₀(2/2) = 0).</span>"},
+
+  {tipo:"mc",
+   stem:"Uma palavra aparece em quase todos os documentos do corpus. O que se espera do seu IDF?",
+   opts:["Próximo de zero", "Muito alto", "Negativo e grande", "Igual ao TF"],
+   ok:0,
+   why:"IDF = log(N/df). Se df ≈ N, o quociente é ≈ 1 e o log ≈ 0. Palavras raras têm IDF alto."},
+
+  {tipo:"mc",
+   stem:"“O carro é rápido” × “O automóvel é veloz” em BoW com vocabulário <code>[carro, automóvel, rápido, veloz]</code>: qual a similaridade e por quê?",
+   opts:["0, porque palavras diferentes ocupam posições diferentes e a técnica não reconhece sinônimos",
+         "1, porque as frases têm o mesmo tamanho",
+         "0,5, porque metade das palavras coincide",
+         "Não é possível calcular"],
+   ok:0,
+   why:"Os vetores são [1,0,1,0] e [0,1,0,1]: o produto escalar é 0. Os embeddings foram propostos justamente para aproximar sinônimos."},
+
+  {tipo:"mc",
+   stem:"Qual característica o TF-IDF tem e o BoW não?",
+   opts:["Considera a importância estatística da palavra no corpus",
+         "Preserva a ordem das palavras",
+         "Reconhece sinônimos",
+         "Representa o significado contextual"],
+   ok:0,
+   why:"Pela tabela comparativa: ambos identificam palavras e frequência; só o TF-IDF considera importância no corpus; nenhum dos dois preserva ordem, sinônimos ou contexto."},
+
+  {tipo:"mc",
+   stem:"O que é um embedding?",
+   opts:["Um vetor numérico aprendido a partir de dados que pode capturar relações semânticas",
+         "Uma contagem de quantas vezes cada palavra aparece",
+         "Uma regra gramatical escrita à mão",
+         "O resultado da remoção de stopwords"],
+   ok:0,
+   why:"Embeddings são vetores multidimensionais aprendidos; as dimensões individuais, em geral, não têm interpretação direta."},
+
+  {tipo:"mc",
+   stem:"Os vetores de um Word2Vec são obtidos:",
+   opts:["Como parâmetros aprendidos por uma rede neural treinada para prever palavras pelo contexto",
+         "Contando quantas vezes as palavras aparecem juntas",
+         "Sorteando valores e nunca ajustando",
+         "Aplicando TF-IDF ao corpus"],
+   ok:0,
+   why:"Não são simples contagens de coocorrência: são parâmetros ajustados no treinamento. Palavras em contextos parecidos tendem a ter vetores parecidos."},
+
+  {tipo:"mc",
+   stem:"Vetores A = (3, 4) e B = (6, 8). Qual a similaridade de cosseno?",
+   opts:["1", "0", "0,5", "−1"],
+   ok:0,
+   why:"A·B = 18 + 32 = 50; ‖A‖ = 5; ‖B‖ = 10; 50/(5·10) = 1. B tem o dobro da magnitude, mas a mesma direção, e o cosseno ignora a magnitude."},
+
+  {tipo:"mc",
+   stem:"A = (3, 0) e C = (0, 4). Qual a similaridade de cosseno e o que significa?",
+   opts:["0: vetores ortogonais, sem relação",
+         "1: mesma direção",
+         "−1: direções opostas",
+         "0,5: parcialmente semelhantes"],
+   ok:0,
+   why:"A·C = 0, então o numerador zera. Os vetores formam 90°."},
+
+  {tipo:"mc",
+   stem:"“Fui ao banco sacar dinheiro” × “Sentei no banco da praça”. Um embedding <strong>estático</strong> tradicional:",
+   opts:["Atribui o mesmo vetor a “banco” nas duas frases",
+         "Atribui vetores diferentes conforme a frase",
+         "Não consegue gerar vetor para “banco”",
+         "Remove a palavra por ser stopword"],
+   ok:0,
+   why:"Word2Vec/GloVe: um vetor por palavra. Representações contextualizadas (BERT, Transformers) podem variar conforme as palavras ao redor."},
+
+  {tipo:"mc",
+   stem:"No parâmetro <code>window=3</code> do Word2Vec:",
+   opts:["O modelo considera 3 palavras antes e 3 depois da palavra-alvo",
+         "Cada vetor tem 3 dimensões",
+         "Palavras que aparecem menos de 3 vezes são ignoradas",
+         "São usadas 3 threads de treinamento"],
+   ok:0,
+   why:"window = janela de contexto. Dimensões = vector_size; frequência mínima = min_count; threads = workers."},
+
+  {tipo:"mc",
+   stem:"Qual parâmetro do Word2Vec garante resultados reprodutíveis fixando a inicialização aleatória?",
+   opts:["seed", "workers", "min_count", "window"],
+   ok:0,
+   why:"A semente (seed=42, por exemplo) fixa os números pseudoaleatórios iniciais, tornando o treino reproduzível."},
+
+  {tipo:"mc",
+   stem:"O que é um Transformer e qual mecanismo o tornou notório?",
+   opts:["Arquitetura de rede neural para sequências que usa mecanismos de atenção (artigo “Attention Is All You Need”, 2017)",
+         "Um algoritmo de busca em grafos",
+         "Uma técnica de stemming",
+         "Um banco de dados vetorial"],
+   ok:0,
+   why:"Transformers processam sequências de tokens, aprendem relações entre eles via atenção e podem gerar representações contextualizadas."},
+
+  {tipo:"mc",
+   stem:"Na atenção, o que representam Query, Key e Value?",
+   opts:["Q: o que o token procura; K: o que ele oferece para comparação; V: a informação que carrega",
+         "Q: a resposta; K: a pergunta; V: o erro",
+         "Q, K e V são três palavras escolhidas manualmente",
+         "Q, K e V são sinônimos"],
+   ok:0,
+   why:"São três vetores aprendidos, obtidos do embedding de entrada por matrizes W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub>. As analogias (biblioteca) são apenas ilustrativas."},
+
+  {tipo:"mc",
+   stem:"Qual é a fórmula da atenção clássica (scaled dot-product)?",
+   opts:["softmax(Q·Kᵀ / √d<sub>k</sub>) · V",
+         "softmax(Q + K) · V",
+         "(Q · V) / K",
+         "log₁₀(N / df) · V"],
+   ok:0,
+   why:"Q·Kᵀ dá as compatibilidades, divide-se pelo fator de escala √d<sub>k</sub>, aplica-se softmax (pesos que somam 1) e combinam-se os Values."},
+
+  {tipo:"mc",
+   stem:"Se, para o token “ele”, o peso de atenção em “animal” é 0,55, isso significa que:",
+   opts:["O Value de “animal” contribui com 55 % da nova representação de “ele”; não é uma certeza de 55 %",
+         "O modelo tem 55 % de certeza de que “ele” se refere a “animal”",
+         "55 % das palavras da frase são “animal”",
+         "A palavra “animal” será removida"],
+   ok:0,
+   why:"Os pesos vêm do softmax e somam 1; eles ponderam os Values. Não são probabilidades de interpretação linguística."},
+
+  {tipo:"mc",
+   stem:"Um modelo <strong>decoder-only</strong>, como o GPT, é mais usado para:",
+   opts:["Geração de texto (prever o próximo token)",
+         "Somente classificação de sentimentos",
+         "Calcular TF-IDF",
+         "Remover stopwords"],
+   ok:0,
+   why:"Encoder-only (BERT): compreensão/classificação. Decoder-only (GPT): geração. Encoder-decoder (T5): tradução/transformação."},
+
+  {tipo:"mc",
+   stem:"Para que serve a máscara causal em modelos como o GPT?",
+   opts:["Impedir que cada token consulte tokens futuros, viabilizando a geração autoregressiva",
+         "Remover tokens de baixa frequência",
+         "Aumentar o tamanho do vocabulário",
+         "Substituir o positional encoding"],
+   ok:0,
+   why:"O modelo só pode considerar os tokens anteriores, como numa leitura da esquerda para a direita."},
+
+  {tipo:"mc",
+   stem:"Qual o papel do positional encoding?",
+   opts:["Informar ao modelo a posição de cada token, já que o Transformer não os processa um por vez",
+         "Calcular a similaridade entre embeddings",
+         "Dividir o texto em chunks",
+         "Reduzir o número de parâmetros"],
+   ok:0,
+   why:"Sem informação posicional, “O cachorro perseguiu o gato” e “O gato perseguiu o cachorro” seriam indistinguíveis para a atenção."},
+
+  {tipo:"mc",
+   stem:"Qual a vantagem do multi-head attention?",
+   opts:["Várias atenções em paralelo, cada uma capturando um tipo de relação entre os tokens",
+         "Reduz a atenção a um único peso por frase",
+         "Elimina a necessidade de embeddings",
+         "Impede o uso de Value"],
+   ok:0,
+   why:"Cada cabeça tem suas próprias transformações de Q, K e V; um único conjunto de pesos obrigaria o modelo a fazer concessões entre relações diferentes."},
+
+  {tipo:"mc",
+   stem:"Como um LLM gera texto de forma autoregressiva?",
+   opts:["Prevendo um token de cada vez e adicionando-o à sequência antes de prever o próximo",
+         "Gerando o texto inteiro de uma vez, sem usar o prompt",
+         "Copiando trechos de um banco de dados vetorial",
+         "Aplicando stemming ao prompt"],
+   ok:0,
+   why:"Prompt → tokenização → Transformer → probabilidades do próximo token → escolhe um → repete."},
+
+  {tipo:"mc",
+   stem:"Qual a diferença entre fine-tuning e instruction tuning?",
+   opts:["Fine-tuning é treino adicional para tarefas/comportamentos específicos; instruction tuning adapta o modelo a seguir instruções do usuário",
+         "São sinônimos exatos",
+         "Fine-tuning é o pré-treinamento; instruction tuning é a tokenização",
+         "Instruction tuning remove parâmetros do modelo"],
+   ok:0,
+   why:"Ambos são etapas após o pré-treinamento, que ensina padrões gerais da linguagem com grandes volumes de texto."},
+
+  {tipo:"mc",
+   stem:"Qual a sequência correta do RAG?",
+   opts:["Preparar a base (documentos → chunks → embeddings → banco vetorial); depois, pergunta → embedding → busca dos trechos → LLM responde com esse contexto",
+         "Pergunta → LLM responde de memória → banco vetorial confirma",
+         "Treinar o LLM novamente a cada pergunta",
+         "Converter a pergunta em BoW e comparar letra a letra"],
+   ok:0,
+   why:"RAG deixa o modelo consultar informações externas antes de responder: documentos internos, manuais, bases atualizadas."},
+
+  {tipo:"mc",
+   stem:"Para busca <strong>semântica</strong> por significado, qual representação é a mais indicada?",
+   opts:["Embeddings", "Bag of Words", "Contagem de caracteres", "Stemming isolado"],
+   ok:0,
+   why:"“Como limpar o sofá” encontra “higienização de estofados” sem palavras em comum, porque os vetores ficam próximos. BoW e TF-IDF são limitados nesse caso."},
+
+  {tipo:"mc",
+   stem:"Qual biblioteca Python é a mais associada a TF-IDF e classificação de sentimentos, segundo a aula?",
+   opts:["scikit-learn", "NLTK", "sentence-transformers", "spaCy"],
+   ok:0,
+   why:"NLTK: tokenização, stopwords, stemming. spaCy: lematização e entidades. sentence-transformers: embeddings de sentenças. transformers: modelos pré-treinados."},
+
+  /* ===================== VISÃO COMPUTACIONAL ===================== */
+  {parte:"Parte III — Visão computacional", sub:"Aula 15. Pixels, canais, Canny, HSV, segmentação e o jogo com webcam.", novaParte:true, tipo:"mc",
+   stem:"Qual a diferença entre processamento de imagens e visão computacional?",
+   opts:["Processamento modifica/melhora/extrai características da imagem; visão computacional interpreta o que há nela",
+         "São a mesma coisa",
+         "Processamento só existe com redes neurais",
+         "Visão computacional apenas ajusta brilho"],
+   ok:0,
+   why:"Ajustar brilho, remover ruído, filtrar e detectar bordas são processamento. Identificar um gato, detectar um pedestre ou contar objetos é visão computacional."},
+
+  {tipo:"mc",
+   stem:"Em uma imagem em escala de cinza de 8 bits, os valores de pixel variam de:",
+   opts:["0 a 255", "0 a 100", "−128 a 127", "0 a 359"],
+   ok:0,
+   why:"0 = preto, 255 = branco. O tipo típico é uint8. Existem imagens com 16 bits ou outras profundidades."},
+
+  {tipo:"mc",
+   stem:"Quantos valores tem, aproximadamente, uma imagem RGB 1920 × 1080?",
+   opts:["≈ 6 milhões (2.073.600 × 3)", "≈ 2 milhões", "≈ 600 mil", "≈ 8 milhões"],
+   ok:0,
+   why:"1920 × 1080 = 2.073.600 pixels, e cada um tem 3 canais, então ≈ 6,2 milhões de valores. Em cinza seriam ≈ 2 milhões."},
+
+  {tipo:"mc",
+   stem:"Quantos KiB ocupa, sem compressão, uma imagem 640 × 480 × 3 com 1 byte por valor?",
+   opts:["≈ 900 KiB", "≈ 300 KiB", "≈ 9 MiB", "≈ 90 KiB"],
+   ok:0,
+   why:"640 × 480 × 3 = 921.600 bytes ≈ 900 KiB."},
+
+  {tipo:"mc",
+   stem:"Ao carregar uma imagem com <code>cv2.imread()</code>, o OpenCV armazena os canais na ordem:",
+   opts:["BGR", "RGB", "HSV", "Cinza"],
+   ok:0,
+   why:"Convenção do OpenCV. Vermelho puro é (0,0,255) em BGR. Por isso, ao exibir com outras bibliotecas, às vezes é preciso converter."},
+
+  {tipo:"mc",
+   stem:"<code>imagem.shape</code> retorna <code>(480, 640, 3)</code>. O que isso significa?",
+   opts:["480 linhas, 640 colunas e 3 canais", "480 colunas, 640 linhas e 3 imagens", "Resolução 480×640 em cinza", "3 pixels de 480×640 bits"],
+   ok:0,
+   why:"A ordem é altura (linhas), largura (colunas), canais. A imagem cinza equivalente teria shape (480, 640)."},
+
+  {tipo:"mc",
+   stem:"Se <code>imagem[100, 200]</code> retorna <code>[50 100 200]</code>, qual é o valor do canal <strong>vermelho</strong>?",
+   opts:["200", "50", "100", "Não é possível saber"],
+   ok:0,
+   why:"A ordem é BGR: azul = 50, verde = 100, vermelho = 200."},
+
+  {tipo:"mc",
+   stem:"Como o OpenCV converte uma imagem BGR para cinza?",
+   opts:["Com média ponderada: Y = 0,299R + 0,587G + 0,114B",
+         "Com a média simples dos três canais",
+         "Mantendo apenas o canal azul",
+         "Tomando o maior canal de cada pixel"],
+   ok:0,
+   why:"O olho humano é mais sensível ao verde, então o verde tem o maior peso e o azul o menor."},
+
+  {tipo:"mc",
+   stem:"Qual a finalidade da detecção de bordas?",
+   opts:["Identificar mudanças significativas de intensidade, que delimitam contornos e estruturas",
+         "Reconhecer que o contorno é de um carro",
+         "Contar pessoas numa imagem",
+         "Converter a imagem para HSV"],
+   ok:0,
+   why:"Detectar bordas não é reconhecer objetos. O Canny destaca contornos, mas não produz informação semântica."},
+
+  {tipo:"mc",
+   stem:"Quais são as cinco etapas do algoritmo de Canny, em ordem?",
+   opts:["Redução de ruído, cálculo dos gradientes, supressão de não máximos, limiarização dupla, rastreamento por histerese",
+         "Cálculo dos gradientes, limiarização dupla, redução de ruído, histerese, supressão de não máximos",
+         "Conversão para HSV, máscara, contornos, momentos, centro",
+         "Tokenização, embeddings, atenção, softmax, saída"],
+   ok:0,
+   why:"Primeiro suaviza (gaussiano) para o ruído não virar borda; depois gradientes; afina com supressão de não máximos; classifica forte/fraca; e por fim a histerese mantém as fracas conectadas às fortes."},
+
+  {tipo:"mc",
+   stem:"Em <code>cv2.Canny(cinza, 100, 200)</code>, o que acontece com um pixel cujo gradiente vale 150 (e não está conectado a nenhuma borda forte)?",
+   opts:["É borda fraca e é descartada, porque não está conectada a uma borda forte",
+         "É borda forte e é mantido",
+         "É descartado por estar abaixo do limite inferior",
+         "É convertido em vermelho"],
+   ok:0,
+   why:"Entre 100 e 200 = borda fraca. Pela histerese, bordas fracas só permanecem se estiverem conectadas a bordas fortes (acima de 200)."},
+
+  {tipo:"mc",
+   stem:"O que se espera ao <strong>diminuir</strong> os limites do Canny (ex.: de 100/200 para 30/60)?",
+   opts:["Mais bordas detectadas, inclusive pequenas variações e ruído",
+         "Menos bordas, só as mais fortes",
+         "Nenhuma mudança",
+         "A imagem passa a ser colorida"],
+   ok:0,
+   why:"Limites baixos são mais permissivos; limites altos só mantêm mudanças intensas. Não existe configuração universalmente melhor."},
+
+  {tipo:"mc",
+   stem:"Para que serve a suavização gaussiana no início do Canny?",
+   opts:["Reduzir ruído para que pequenas variações não sejam confundidas com bordas",
+         "Converter a imagem para HSV",
+         "Aumentar a resolução",
+         "Calcular o centro do objeto"],
+   ok:0,
+   why:"Cada pixel passa a ser uma média ponderada com os vizinhos (mais peso aos mais próximos), deixando a imagem levemente desfocada."},
+
+  {tipo:"mc",
+   stem:"No OpenCV (uint8), qual a faixa do canal H (matiz) no HSV?",
+   opts:["0 a 179", "0 a 255", "0 a 360", "0 a 100"],
+   ok:0,
+   why:"S e V vão de 0 a 255; H usa 0–179 (metade dos 360° para caber em 8 bits)."},
+
+  {tipo:"mc",
+   stem:"Por que a segmentação do vermelho em HSV costuma usar duas faixas de H?",
+   opts:["Porque o vermelho aparece nas duas extremidades da escala de matiz (perto de 0 e de 179)",
+         "Porque o vermelho tem dois canais em BGR",
+         "Porque o OpenCV não suporta vermelho",
+         "Porque a saturação do vermelho é sempre zero"],
+   ok:0,
+   why:"Usa-se, por exemplo, [0–10] e [170–179], com duas chamadas de inRange combinadas por bitwise_or."},
+
+  {tipo:"mc",
+   stem:"Numa máscara binária, o que significam os valores 255 e 0?",
+   opts:["255: pixel selecionado; 0: pixel ignorado", "255: erro; 0: sucesso", "255: pixel azul; 0: pixel vermelho", "255: borda fraca; 0: borda forte"],
+   ok:0,
+   why:"A máscara indica quais pixels devem ser mantidos. <code>cv2.inRange</code> a gera, e <code>bitwise_and(..., mask=masc)</code> a aplica."},
+
+  {tipo:"mc",
+   stem:"Por que uma bola vermelha na sombra pode não ser detectada com <code>V mínimo = 100</code>?",
+   opts:["Porque a sombra reduz o brilho (V) abaixo do mínimo exigido",
+         "Porque sombras mudam o formato da bola",
+         "Porque o OpenCV ignora sombras",
+         "Porque a saturação máxima é 100"],
+   ok:0,
+   why:"A iluminação altera os valores de cor capturados: sombras, reflexos e o tipo de luz exigem ajuste dos limites."},
+
+  {tipo:"mc",
+   stem:"No jogo com webcam, como calcular o centro de um contorno com momentos?",
+   opts:["cx = m10 / m00 e cy = m01 / m00",
+         "cx = m00 / m10 e cy = m00 / m01",
+         "cx = m10 + m01 e cy = m00",
+         "cx = m00 e cy = m00"],
+   ok:0,
+   why:"m00 é a área associada ao contorno; m10/m00 e m01/m00 dão as coordenadas médias, o ponto de equilíbrio da região."},
+
+  {tipo:"mc",
+   stem:"Como verificar se o objeto acertou o alvo de raio r?",
+   opts:["Se a distância √((cx − xt)² + (cy − yt)²) entre os centros for menor que r",
+         "Se cx for maior que xt",
+         "Se a máscara estiver totalmente preta",
+         "Se a imagem tiver mais de 1 milhão de pixels"],
+   ok:0,
+   why:"Distância euclidiana entre o centro do objeto e o centro do alvo, comparada com o raio do alvo."},
+
+  /* ===================== DISCURSIVAS ===================== */
+  {parte:"Parte IV — Discursivas", sub:"Não entram no placar. Escreva sua resposta antes de abrir o roteiro.", novaParte:true, tipo:"disc",
+   stem:"Explique o ciclo de um algoritmo genético e o papel de cada operador (seleção, crossover, mutação). Em seguida, compare AG e força bruta no problema do caixeiro viajante.",
+   modelo:"<ul>" +
+     "<li><strong>Ciclo:</strong> população inicial → avaliação (fitness) → seleção dos pais → crossover → mutação → nova população → repetir até a condição de parada (nº de gerações ou fitness estável).</li>" +
+     "<li><strong>Seleção:</strong> dá maior chance de reprodução aos mais aptos (roleta, torneio, ranking, elitismo).</li>" +
+     "<li><strong>Crossover:</strong> combina características dos pais; no TSP, usa-se PMX ou OX para manter uma permutação válida.</li>" +
+     "<li><strong>Mutação:</strong> pequena alteração aleatória (swap, insertion, inversion); introduz diversidade e evita estagnação; muito alta destrói boas soluções.</li>" +
+     "<li><strong>TSP:</strong> (n − 1)! rotas; a força bruta garante o ótimo, mas é inviável (20 cidades ≈ 73 anos). O AG encontra uma solução muito boa em tempo viável, sem garantir o ótimo.</li></ul>"},
+
+  {tipo:"disc",
+   stem:"Dadas as frases “Gosto de Python” e “Gosto de Java”, monte o vocabulário e os vetores BoW. Em seguida, explique por que “O cachorro mordeu o homem” e “O homem mordeu o cachorro” expõem uma limitação do BoW e como os embeddings e os Transformers tratam essa e outras limitações.",
+   modelo:"<ul>" +
+     "<li><strong>BoW:</strong> vocabulário [gosto, de, python, java] → Texto 1 = [1,1,1,0]; Texto 2 = [1,1,0,1].</li>" +
+     "<li><strong>Limitação:</strong> as duas frases do cachorro têm a mesma contagem (cachorro 1, homem 1, mordeu 1, o 2): o BoW ignora a ordem, e o significado é diferente. Também não reconhece sinônimos (carro × automóvel → similaridade 0) nem resolve a ambiguidade (banco).</li>" +
+     "<li><strong>Embeddings:</strong> vetores aprendidos que aproximam palavras de significado ou contexto parecido (carro ≈ automóvel); comparáveis por cosseno. Os estáticos (Word2Vec) ainda dão um único vetor por palavra.</li>" +
+     "<li><strong>Transformers:</strong> atenção (Q, K, V) cria representações contextualizadas (“banco” varia com a frase) e o positional encoding preserva a ordem. Custo: treino e recursos; não garantem compreensão perfeita.</li></ul>"},
+
+  {tipo:"disc",
+   stem:"Descreva o mecanismo de atenção de um Transformer: o que são Query, Key e Value, como os pesos são calculados e como o resultado é produzido. Use o exemplo “O animal não atravessou a rua porque ele estava cansado”.",
+   modelo:"<ul>" +
+     "<li>Cada token gera três vetores aprendidos: <strong>Q</strong> (o que procura), <strong>K</strong> (o que oferece) e <strong>V</strong> (a informação que carrega), a partir de X por W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub>.</li>" +
+     "<li>Para o token “ele”, calcula-se a compatibilidade Q·K com cada token; divide-se por √d<sub>k</sub>; aplica-se softmax e obtêm-se pesos que somam 1 (ex.: mais peso em “animal”).</li>" +
+     "<li>O resultado é <code>z = Σ peso·V</code>, uma combinação ponderada dos Values: uma representação contextualizada de “ele” que incorpora informação de “animal”.</li>" +
+     "<li>Ressalvas: o peso 0,55 não é “55 % de certeza”; os pesos vêm do treino, não de regras gramaticais. Multi-head usa várias atenções em paralelo; a máscara causal impede olhar o futuro nos modelos geradores.</li></ul>"},
+
+  {tipo:"disc",
+   stem:"Explique como o OpenCV pode detectar e acompanhar uma bolinha vermelha na webcam para controlar um jogo, citando as funções e o raciocínio de cada etapa. Quais problemas práticos podem aparecer?",
+   modelo:"<ul>" +
+     "<li><strong>Converter para HSV:</strong> <code>cvtColor(frame, COLOR_BGR2HSV)</code>; o matiz concentra a informação de cor.</li>" +
+     "<li><strong>Máscara:</strong> <code>inRange</code> com duas faixas de vermelho ([0,100,100]–[10,255,255] e [170,100,100]–[179,255,255]) unidas por <code>bitwise_or</code>; <code>bitwise_and</code> mantém só a região da cor.</li>" +
+     "<li><strong>Posição:</strong> <code>findContours</code> → <code>moments</code> → cx = m10/m00, cy = m01/m00 (centro).</li>" +
+     "<li><strong>Jogo:</strong> desenhar alvos (<code>circle</code>, <code>rectangle</code>, <code>putText</code>); acerto se √((cx−xt)²+(cy−yt)²) &lt; raio; +10 pontos; novo alvo; vitória aos 50.</li>" +
+     "<li><strong>Problemas:</strong> iluminação (sombras, reflexos, tipo de luz) altera H/S/V; outros objetos vermelhos; limites que precisam de ajuste; ruído.</li></ul>"}
+  ];
+
+  var quiz = document.getElementById("quiz"), LETRAS = ["A","B","C","D","E"];
+  var totalMC = 0;
+  for (var t = 0; t < Q.length; t++) if (Q[t].tipo === "mc") totalMC++;
+  var respondidas = 0, certas = 0, erros = [];
+
+  (function marcar(){
+    var atual = "";
+    for (var i = 0; i < Q.length; i++){ if (Q[i].novaParte) atual = Q[i].parte; Q[i].parteAtual = atual; }
+  })();
+
+  function embaralhar(a){
+    for (var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var tmp = a[i]; a[i] = a[j]; a[j] = tmp; }
+    return a;
+  }
+
+  function render(){
+    quiz.innerHTML = "";
+    respondidas = 0; certas = 0; erros = [];
+    document.getElementById("result").classList.remove("on");
+    var numMC = 0;
+    for (var i = 0; i < Q.length; i++){
+      var q = Q[i];
+      if (q.novaParte){
+        var p = document.createElement("p"); p.className = "parte"; p.textContent = q.parte; quiz.appendChild(p);
+        var h = document.createElement("h2"); h.textContent = q.parte.replace(/^Parte [IV]+ — /, ""); quiz.appendChild(h);
+        var sb = document.createElement("p"); sb.className = "parte-sub"; sb.textContent = q.sub; quiz.appendChild(sb);
+      }
+      var card = document.createElement("div"); card.className = "q";
+      var label;
+      if (q.tipo === "mc"){ numMC++; label = 'Questão ' + numMC + ' <span class="kind">· múltipla escolha</span>'; }
+      else label = '<span class="kind">Discursiva</span>';
+      var html = '<span class="q-num">' + label + '</span>' + (q.extra || "") + '<p class="stem">' + q.stem + '</p>';
+      if (q.tipo === "mc"){
+        var ordem = []; for (var z = 0; z < q.opts.length; z++) ordem.push(z);
+        embaralhar(ordem);
+        html += '<div class="opts">';
+        for (var o = 0; o < ordem.length; o++)
+          html += '<button type="button" class="opt" data-i="' + ordem[o] + '"><span class="letra">' + LETRAS[o] + '</span><span>' + q.opts[ordem[o]] + '</span></button>';
+        html += '</div><div class="why"><span class="verdict"></span><div class="txt"></div></div>';
+      } else {
+        html += '<button type="button" class="disc-btn">Ver o roteiro da resposta esperada →</button><div class="modelo"><span class="verdict">Roteiro esperado</span>' + q.modelo + '</div>';
+      }
+      card.innerHTML = html; quiz.appendChild(card);
+      if (q.tipo === "mc") bindMC(card, q, numMC);
+      else card.querySelector(".disc-btn").addEventListener("click", (function(c){ return function(){ c.classList.add("aberta"); }; })(card));
+    }
+    updateTally();
+  }
+
+  function bindMC(card, q, numero){
+    var botoes = card.querySelectorAll(".opt"), why = card.querySelector(".why"), posCerta = 0;
+    for (var p = 0; p < botoes.length; p++) if (parseInt(botoes[p].getAttribute("data-i"), 10) === q.ok) posCerta = p;
+    for (var b = 0; b < botoes.length; b++){
+      botoes[b].addEventListener("click", function(){
+        if (card.classList.contains("resolvida")) return;
+        var escolhida = parseInt(this.getAttribute("data-i"), 10), acertou = (escolhida === q.ok);
+        card.classList.add("resolvida");
+        for (var j = 0; j < botoes.length; j++){
+          botoes[j].disabled = true;
+          if (parseInt(botoes[j].getAttribute("data-i"), 10) === q.ok) botoes[j].classList.add("certa");
+        }
+        if (!acertou) this.classList.add("errada");
+        why.className = "why " + (acertou ? "ok" : "no");
+        why.querySelector(".verdict").textContent = acertou ? "✓ Correto" : "✕ Resposta correta: " + LETRAS[posCerta];
+        why.querySelector(".txt").innerHTML = q.why;
+        respondidas++;
+        if (acertou) certas++; else erros.push({ n:numero, tema:q.parteAtual });
+        updateTally();
+      });
+    }
+  }
+
+  function updateTally(){
+    document.getElementById("tally").innerHTML = "respondidas <b>" + respondidas + "</b>/" + totalMC +
+      ' · <span class="hit">' + certas + " certas</span> · <span class=\"miss\">" + (respondidas - certas) + " erradas</span>";
+    document.getElementById("bar").style.width = (respondidas / totalMC * 100) + "%";
+    if (respondidas === totalMC) mostrarResultado();
+  }
+
+  function mostrarResultado(){
+    var pct = Math.round(certas / totalMC * 100), res = document.getElementById("result");
+    document.getElementById("pct").textContent = certas + "/" + totalMC + "  ·  " + pct + "%";
+    var msg;
+    if (pct >= 90) msg = "Você está pronto. Se sobrar tempo, passe pelas discursivas.";
+    else if (pct >= 75) msg = "Base sólida. Foque nos temas abaixo.";
+    else if (pct >= 60) msg = "Dá para chegar lá. Releia as páginas dos temas errados e refaça.";
+    else msg = "Volte às páginas de revisão antes de refazer.";
+    document.getElementById("verdito").textContent = msg;
+    var por = {};
+    erros.forEach(function(e){ (por[e.tema] = por[e.tema] || []).push(e.n); });
+    var ul = document.getElementById("weak"); ul.innerHTML = "";
+    var vazio = true;
+    for (var tema in por){
+      vazio = false;
+      var li = document.createElement("li"); li.innerHTML = '<span>Q' + por[tema].join(", Q") + '</span><span>' + tema + '</span>'; ul.appendChild(li);
+    }
+    if (vazio){ var l2 = document.createElement("li"); l2.innerHTML = '<span>—</span><span>Nenhum erro. Placar limpo.</span>'; ul.appendChild(l2); }
+    res.classList.add("on"); res.scrollIntoView({ behavior:"smooth", block:"start" });
+  }
+
+  document.getElementById("again").addEventListener("click", function(){ render(); window.scrollTo({ top:0, behavior:"smooth" }); });
+  document.getElementById("top").addEventListener("click", function(){ window.scrollTo({ top:0, behavior:"smooth" }); });
+  render();
+})();
+</script>
+<script src="theme.js" defer></script>
+</body>
+</html>

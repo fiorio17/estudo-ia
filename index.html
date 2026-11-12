@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="Material de revisao da disciplina de Inteligencia Artificial: guia, exercicios de tracado e simulado.">
+  <meta name="description" content="Material de revisao da disciplina de Inteligencia Artificial: busca, algoritmos geneticos, PLN, visao computacional, exercicios de tracado e simulados.">
   <title>Mapa de estudo — Inteligência Artificial</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🗺️%3C/text%3E%3C/svg%3E">
   <style>
@@ -114,7 +114,7 @@ footer a{color:var(--accent);}
 <header>
   <p class="eyebrow">Inteligência Artificial · material de revisão</p>
   <h1>Mapa de <em>estudo</em>.</h1>
-  <p class="lede">Nove aulas condensadas em três páginas que funcionam offline, em qualquer navegador. Peso concentrado em algoritmos de busca.</p>
+  <p class="lede">As aulas condensadas em páginas que funcionam offline, em qualquer navegador: busca, algoritmos genéticos, PLN e visão computacional, com simuladores, exercícios e dois simulados.</p>
 </header>
 
 <div class="cards">
@@ -140,10 +140,39 @@ footer a{color:var(--accent);}
     <div class="meta"><span><b>35</b> objetivas</span><span><b>4</b> discursivas</span><span>alternativas embaralhadas</span></div>
   </a>
 
+
+  <a class="card" href="genetico.html">
+    <span class="etapa">Aula 11 · algoritmos genéticos</span>
+    <h2>Algoritmos genéticos</h2>
+    <p>Seleção, crossover e mutação passo a passo. Simule a população de 4 bits (x²), rode um AG de verdade no caixeiro viajante e confira o PMX e o OX dos slides.</p>
+    <div class="meta"><span><b>3</b> laboratórios</span><span><b>14</b> flashcards</span><span>PMX · OX · TSP</span></div>
+  </a>
+
+  <a class="card" href="pln.html">
+    <span class="etapa">Aulas 12 e PLN II · linguagem natural</span>
+    <h2>Processamento de linguagem natural</h2>
+    <p>Pipeline, stopwords, stemming × lematização, BoW, TF-IDF, embeddings, cosseno, Transformers, atenção, LLMs e RAG, com calculadoras para as contas dos slides.</p>
+    <div class="meta"><span><b>7</b> laboratórios</span><span><b>21</b> flashcards</span><span>TF-IDF · cosseno · softmax</span></div>
+  </a>
+
+  <a class="card" href="visao.html">
+    <span class="etapa">Aula 15 · visão computacional</span>
+    <h2>Visão computacional</h2>
+    <p>Pixels, canais RGB/BGR, escala de cinza, Canny, HSV, máscaras e o jogo controlado por cor, rodando sobre uma imagem de teste, uma foto sua ou a webcam.</p>
+    <div class="meta"><span><b>6</b> laboratórios</span><span><b>18</b> flashcards</span><span>OpenCV · Canny · HSV</span></div>
+  </a>
+
+  <a class="card" href="simulado2.html">
+    <span class="etapa">Etapa 4 · medir as aulas novas</span>
+    <h2>Simulado 2</h2>
+    <p>Questões sobre algoritmos genéticos, PLN e visão computacional, com correção na hora e explicação, mais 4 discursivas com o roteiro esperado.</p>
+    <div class="meta"><span><b>73</b> objetivas</span><span><b>4</b> discursivas</span><span>alternativas embaralhadas</span></div>
+  </a>
+
 </div>
 
-<h3>O que mais pesa</h3>
-<p class="txt">Vinte das trinta e cinco questões objetivas são de busca, e os sete exercícios de traçado são todos de busca. Essa é a distribuição proposital: o restante da matéria está coberto no guia, mas o treino está concentrado onde a prova concentra.</p>
+<h3>O que mais pesa (busca)</h3>
+<p class="txt">No material de busca, vinte das trinta e cinco questões objetivas são de busca, e os sete exercícios de traçado são todos de busca. Essa é a distribuição proposital: o restante da matéria está coberto no guia, mas o treino está concentrado onde a prova concentra.</p>
 <ul>
   <li><strong>Busca cega</strong> — BFS e DFS, estruturas, ordem de visita, tabela de pais</li>
   <li><strong>Busca por custo</strong> — Dijkstra, relaxamento de arestas</li>
@@ -160,7 +189,7 @@ footer a{color:var(--accent);}
 </div>
 
 <h3>Rodando local</h3>
-<p class="txt">São três arquivos HTML sem nenhuma dependência externa — nada de CDN, fonte remota ou build. Basta clonar e abrir <code>index.html</code> no navegador, sem internet:</p>
+<p class="txt">São páginas HTML sem nenhuma dependência externa — nada de CDN, fonte remota ou build (só <code>base.css</code>, <code>comum.js</code> e <code>theme.js</code>, locais). Basta clonar e abrir <code>index.html</code> no navegador, sem internet. O modo webcam do jogo de visão computacional só funciona via <code>https</code> ou <code>localhost</code>; o restante funciona também por <code>file://</code>.</p>
 <p class="txt"><code>git clone https://github.com/fiorio17/estudo-ia.git</code></p>
 
 <footer>

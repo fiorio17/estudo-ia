@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Algoritmos genéticos: seleção, crossover, mutação, TSP, PMX e OX, com simuladores interativos.">
+  <title>Algoritmos genéticos — Inteligência Artificial</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🧬%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="base.css">
+</head>
+<body>
+<div class="page">
+
+<nav class="topnav" aria-label="Páginas">
+  <a href="index.html">Início</a>
+  <a href="guia.html">Busca</a>
+  <a href="genetico.html" aria-current="page">Genéticos</a>
+  <a href="pln.html">PLN</a>
+  <a href="visao.html">Visão</a>
+  <a href="tracado.html">Traçado</a>
+  <a href="simulado.html">Simulado</a>
+  <a href="simulado2.html">Simulado 2</a>
+</nav>
+
+<header class="masthead">
+  <p class="eyebrow">Aula 11 · Inteligência Artificial</p>
+  <h1>Algoritmos <em>genéticos</em>.</h1>
+  <p class="lede">Uma população de soluções que evolui por seleção, cruzamento e mutação. Aqui você simula à mão o exemplo de x², roda um AG de verdade no caixeiro viajante e confere o PMX e o OX dos slides.</p>
+  <ul class="priority">
+    <li><b>Para entender</b><span>Indivíduo, população, fitness, seleção, crossover, mutação: o ciclo completo.</span></li>
+    <li><b>Para traçar à mão</b><span>Simulação de 4 bits (x²), PMX e OX com cortes — caem como exercício.</span></li>
+    <li><b>Para argumentar</b><span>Por que força bruta não escala no TSP e o que o AG troca por isso.</span></li>
+  </ul>
+</header>
+
+<div class="shell">
+<nav class="rail" aria-label="Sumário">
+  <p>Sumário</p>
+  <a href="#ideia">A ideia</a>
+  <a href="#fitness">Fitness</a>
+  <a href="#x2">Simulação x² (lab)</a>
+  <a href="#grafo">Exemplo no grafo</a>
+  <a href="#tsp">Caixeiro viajante</a>
+  <a href="#labtsp">AG no TSP (lab)</a>
+  <hr>
+  <a href="#selecao">Estratégias de seleção</a>
+  <a href="#cruzamento">PMX e OX (lab)</a>
+  <a href="#mutacao">Mutações (lab)</a>
+  <a href="#substituicao">Substituição</a>
+  <hr>
+  <a href="#autoteste">Autoteste</a>
+</nav>
+
+<main>
+
+<!-- ================= A IDEIA ================= -->
+<section id="ideia">
+  <h2><span class="num">Aula 11 · conceito</span>A ideia: evolução como busca</h2>
+  <div class="prose">
+    <p>Numa população de coelhos, os mais rápidos escapam mais dos predadores, vivem mais e deixam mais filhotes. Depois de várias gerações a população inteira tende a ficar mais rápida. <strong>Características que favorecem a sobrevivência tendem a ficar mais frequentes ao longo das gerações.</strong></p>
+    <p>Um <strong>algoritmo genético (AG)</strong> faz isso com soluções de um problema: mantém uma <strong>população de soluções candidatas</strong>, avalia cada uma, deixa as mais aptas se reproduzirem e introduz pequenas mudanças aleatórias. A cada geração espera-se obter soluções melhores.</p>
+  </div>
+
+  <div class="callout key">
+    <span class="tag">Ciclo do algoritmo</span>
+    <p class="mono" style="margin:0">Problema → população inicial → <b>avaliação (fitness)</b> → <b>seleção</b> → <b>reprodução (crossover)</b> → <b>mutação</b> → nova população → (repete até a condição de parada)</p>
+  </div>
+
+  <div class="scroller"><table>
+    <thead><tr><th>Biologia</th><th>Algoritmo genético</th><th>No exemplo x² (4 bits)</th></tr></thead>
+    <tbody>
+      <tr><td>Indivíduo</td><td>Uma solução</td><td class="mono">1010 (x = 10)</td></tr>
+      <tr><td>População</td><td>Conjunto de soluções</td><td class="mono">0011, 1010, 1111, 0101</td></tr>
+      <tr><td>Cromossomo</td><td>A codificação da solução</td><td class="mono">os 4 bits</td></tr>
+      <tr><td>Gene</td><td>Parte da solução</td><td class="mono">cada bit</td></tr>
+      <tr><td>Fitness</td><td>Função de aptidão</td><td class="mono">x²</td></tr>
+      <tr><td>Seleção natural</td><td>Seleção das soluções</td><td>roleta, torneio, ranking, elitismo</td></tr>
+      <tr><td>Crossover</td><td>Combinação de soluções</td><td class="mono">1010 × 1111 → 1011, 1110</td></tr>
+      <tr><td>Mutação</td><td>Pequena alteração aleatória</td><td class="mono">1110 → 1111</td></tr>
+      <tr><td>Geração</td><td>Uma iteração do algoritmo</td><td>um ciclo completo</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout warn">
+    <span class="tag">Cuidado</span>
+    <p>Os AGs são <strong>inspirados</strong> na evolução biológica, mas não simulam a biologia fielmente. E não garantem a solução ótima: procuram uma solução <em>muito boa</em>.</p>
+  </div>
+</section>
+
+<!-- ================= FITNESS ================= -->
+<section id="fitness">
+  <h2><span class="num">Aula 11 · função de aptidão</span>O conceito de fitness</h2>
+  <div class="prose">
+    <p>O fitness diz <strong>quão boa é uma solução</strong>. Não é necessariamente a resposta do problema, e sim uma forma de medir a qualidade.</p>
+  </div>
+  <div class="scroller"><table>
+    <thead><tr><th>Objetivo</th><th>Fitness</th><th>Exemplo</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Maximizar</strong></td><td class="mono">fitness = x²</td><td class="mono">x = 1, 2, 5, 10 → fitness 1, 4, 25, 100</td></tr>
+      <tr><td><strong>Minimizar</strong></td><td class="mono">fitness = 1 / distância</td><td class="mono">dist. 100, 50, 20, 10 → fitness 0,010, 0,020, 0,050, 0,100</td></tr>
+      <tr><td>Menor número de saltos</td><td class="mono">fitness = 1 / saltos</td><td class="mono">3 saltos → 0,333; 5 saltos → 0,2</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">Quando o problema é de <em>minimizar</em>, usa-se o inverso: quanto menor o custo, maior o fitness, e a seleção "prefere" os maiores fitness do mesmo jeito.</p>
+</section>
+
+<!-- ================= LAB X2 ================= -->
+<section id="x2">
+  <h2><span class="num">Laboratório</span>Simulação manual: maximizar x²</h2>
+  <div class="prose">
+    <p>É a simulação do slide: cada indivíduo é um número de 0 a 15, codificado em <strong>4 bits</strong>, e o objetivo é maximizar <code>fitness = x²</code>. O ótimo é <code>1111</code> (x = 15, fitness 225). Comece pela população do slide (<code>0011, 1010, 1111, 0101</code>) e avance uma geração por vez, lendo o registro do que aconteceu.</p>
+  </div>
+
+  <div class="lab" id="labx2">
+    <div class="lab-head">
+      <h3>Evolução de uma população de 4 bits</h3>
+      <div class="segmented" role="group" aria-label="Método de seleção">
+        <button class="seg" data-sel="roleta" aria-pressed="true">Roleta</button>
+        <button class="seg" data-sel="torneio" aria-pressed="false">Torneio (k=2)</button>
+      </div>
+    </div>
+    <div class="fields">
+      <div class="slider"><span class="lbl">Taxa de mutação (por bit)</span><input id="x2mut" type="range" min="0" max="0.5" step="0.01" value="0.05" data-fmt="pct"><output></output></div>
+      <div class="field"><label for="x2tam">Tamanho da população</label><select id="x2tam"><option>4</option><option>6</option><option>8</option><option>10</option></select></div>
+      <div class="field"><label for="x2eli">Elitismo</label><select id="x2eli"><option value="0">Desligado</option><option value="1">Preservar o melhor</option></select></div>
+    </div>
+    <div class="lab-body">
+      <div>
+        <div class="scroller" style="margin-top:0"><table style="min-width:0">
+          <thead><tr><th>#</th><th>Cromossomo</th><th class="num">x</th><th class="num">Fitness</th><th>Chance (roleta)</th></tr></thead>
+          <tbody id="x2tab"></tbody>
+        </table></div>
+        <div class="ctrls">
+          <button class="ctrl" id="x2prox">Próxima geração</button>
+          <button class="ctrl ghost" id="x2auto">Auto</button>
+          <button class="ctrl ghost" id="x2slide">População do slide</button>
+          <button class="ctrl ghost" id="x2rand">Aleatória</button>
+        </div>
+      </div>
+      <div class="readout">
+        <div class="row"><span class="k">Geração</span><span class="mono" id="x2gen">0</span></div>
+        <div class="row"><span class="k">Melhor</span><span class="mono" id="x2best">—</span></div>
+        <div class="row"><span class="k">Média</span><span class="mono" id="x2avg">—</span></div>
+        <div class="row"><span class="k">Último passo</span><div id="x2log" class="note">Aperte “Próxima geração”.</div></div>
+        <div class="row"><span class="k">Histórico</span><div id="x2hist" class="note"></div></div>
+      </div>
+    </div>
+    <div class="legend"><span><i class="sw" style="background:var(--accent-soft);border-color:var(--accent)"></i>bit do ponto de corte</span><span><i class="sw" style="background:var(--bad-soft);border-color:var(--bad)"></i>bit mutado</span></div>
+  </div>
+
+  <div class="callout">
+    <span class="tag">Perguntas do slide</span>
+    <ul>
+      <li><strong>Por que não escolher simplesmente um dos pais?</strong> Porque o objetivo do crossover é <em>combinar características</em> de soluções existentes. Copiar um pai não cria nada novo.</li>
+      <li><strong>Por que mutar?</strong> O crossover gera filhos muito parecidos entre si; a mutação <strong>introduz diversidade</strong> e evita estagnação. Em excesso, destrói as boas características dos pais.</li>
+      <li>Teste: coloque a mutação em 0 % e depois em 50 %. Com 0 %, a população pode travar sem nunca produzir um bit que ela perdeu; com 50 %, vira busca aleatória.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= GRAFO ================= -->
+<section id="grafo">
+  <h2><span class="num">Aula 11 · exemplo</span>O mesmo ciclo num grafo (A → G)</h2>
+  <div class="prose">
+    <p>O slide repete o ciclo achando caminhos de A até G, em sete etapas. Cada <strong>caminho válido</strong> é um indivíduo.</p>
+  </div>
+  <div class="scroller"><table>
+    <thead><tr><th>Etapa</th><th>O que acontece</th><th>No exemplo</th></tr></thead>
+    <tbody>
+      <tr><td>1. Codificação</td><td>Cada caminho é um indivíduo</td><td class="mono">[A, C, E, G]</td></tr>
+      <tr><td>2. População inicial</td><td>Vários caminhos válidos de A a G</td><td class="mono">3, 4, 4 e 5 saltos</td></tr>
+      <tr><td>3. Função de aptidão</td><td>fitness = 1 / saltos</td><td class="mono">3 saltos → ≈ 0,333</td></tr>
+      <tr><td>4. Seleção</td><td>Escolhe os pais mais aptos</td><td class="mono">Pai 1 e Pai 2</td></tr>
+      <tr><td>5. Crossover</td><td>Troca partes dos caminhos num ponto de corte</td><td class="mono">[A,C | E,G] × [A,B,C | D,G]</td></tr>
+      <tr><td>6. Mutação</td><td>Altera um gene para evitar estagnação</td><td class="mono">[A,C,D,G] → [A,B,D,G]</td></tr>
+      <tr><td>7. Nova geração</td><td>Filhos + melhores da geração anterior</td><td>a população seguinte</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn">
+    <span class="tag">Confira no slide</span>
+    <p>Nos filhos do crossover, o slide rotula <code>[A, B, C, E, G]</code> como "caminho de 3 saltos" e <code>[A, C, D, G]</code> como "4 saltos". Contando as arestas, é o contrário: <code>[A,B,C,E,G]</code> tem <strong>4 saltos</strong> e <code>[A,C,D,G]</code> tem <strong>3</strong>. Também há uma troca entre o 4º indivíduo do slide 26 (<code>[A,C,D,B,D,G]</code>) e o da tabela do slide 27 (<code>[A,C,B,D,E,G]</code>). Em prova, conte as arestas você mesmo.</p>
+  </div>
+</section>
+
+<!-- ================= TSP ================= -->
+<section id="tsp">
+  <h2><span class="num">Aula 11 · aplicação</span>O caixeiro viajante (TSP)</h2>
+  <div class="prose">
+    <p>Um caixeiro precisa <strong>visitar várias cidades uma única vez e voltar à inicial</strong>, percorrendo a menor distância possível. É um problema <strong>NP-difícil</strong>: não se conhece algoritmo eficiente que o resolva de forma ótima em instâncias grandes.</p>
+    <p>Com a cidade inicial fixa, o número de rotas é <code>(n − 1)!</code>. Para 4 cidades, são 6 rotas; as rotas A→B→C→D→A e A→D→C→B→A têm a mesma distância (125) porque são a mesma volta lida ao contrário.</p>
+  </div>
+
+  <div class="lab">
+    <div class="lab-head"><h3>Calculadora da força bruta</h3></div>
+    <div class="fields">
+      <div class="slider"><span class="lbl">Número de cidades (n)</span><input id="fbn" type="range" min="3" max="30" step="1" value="15"><output></output></div>
+      <div class="field"><label for="fbr">Rotas avaliadas por segundo</label><select id="fbr">
+        <option value="250e6">250 milhões (n=5 no slide)</option>
+        <option value="110e6">110 milhões (n=10)</option>
+        <option value="71e6" selected>71 milhões (n=15)</option>
+        <option value="53e6">53 milhões (n=20)</option>
+        <option value="42e6">42 milhões (n=25)</option>
+        <option value="1e9">1 bilhão (hipotético)</option>
+      </select></div>
+    </div>
+    <div class="readout">
+      <div class="row"><span class="k">Rotas</span><span class="mono" id="fbrot">—</span></div>
+      <div class="row"><span class="k">Tempo</span><span class="mono" id="fbtempo">—</span></div>
+    </div>
+    <p class="hint" style="margin-top:12px">Reproduz a tabela do slide: n=10 → 0,003 s; n=15 → ≈ 20 min; n=20 → ≈ 73 anos; n=25 → ≈ 470 milhões de anos. O slide escreve 365 880 para 9!, mas 9! = <strong>362 880</strong> (o texto do slide seguinte usa o valor correto).</p>
+  </div>
+
+  <div class="callout key">
+    <span class="tag">A troca que o AG faz</span>
+    <p><strong>Força bruta</strong> garante a solução ótima, se conseguir terminar. <strong>Algoritmo genético</strong> procura uma solução muito boa em tempo viável, mas <strong>não garante</strong> a ótima. Até ~10–12 cidades a força bruta ainda é viável; com 50, 100, 1000, não.</p>
+  </div>
+
+  <div class="scroller"><table>
+    <thead><tr><th>Conceito</th><th>No TSP</th></tr></thead>
+    <tbody>
+      <tr><td>Indivíduo</td><td>Uma rota</td></tr>
+      <tr><td>População</td><td>Conjunto de rotas</td></tr>
+      <tr><td>Cromossomo</td><td>Ordem das cidades</td></tr>
+      <tr><td>Gene</td><td>Uma cidade</td></tr>
+      <tr><td>Fitness</td><td>Qualidade da rota (1 / distância)</td></tr>
+      <tr><td>Seleção</td><td>Escolha das melhores rotas</td></tr>
+      <tr><td>Crossover</td><td>Combinação de rotas (sem repetir cidade: PMX, OX)</td></tr>
+      <tr><td>Mutação</td><td>Alteração da ordem das cidades (swap, insertion, inversion)</td></tr>
+      <tr><td>Objetivo</td><td>Minimizar a distância</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Exemplo do slide: fitness = 1 / distância</h3>
+  <div class="scroller"><table>
+    <thead><tr><th>Indivíduo</th><th>Rota</th><th class="num">Distância</th><th class="num">Fitness</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td class="mono">A-B-C-D-E-A</td><td class="num">70</td><td class="num">0,014</td></tr>
+      <tr><td>2</td><td class="mono">A-C-E-B-D-A</td><td class="num">106</td><td class="num">0,009</td></tr>
+      <tr><td>3</td><td class="mono">A-D-C-B-E-A</td><td class="num">81</td><td class="num">0,012</td></tr>
+      <tr><td>4</td><td class="mono">A-B-D-E-C-A</td><td class="num">95</td><td class="num">0,010</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">A condição de parada é atingir um <strong>número fixo de gerações</strong> ou o fitness <strong>parar de melhorar</strong> por muitas gerações seguidas.</p>
+</section>
+
+<!-- ================= LAB TSP ================= -->
+<section id="labtsp">
+  <h2><span class="num">Laboratório</span>Um AG de verdade no TSP</h2>
+  <div class="prose">
+    <p>Este é o AG completo: população de rotas, seleção por torneio, crossover <strong>OX</strong>, mutação por inversão ou troca e elitismo. Mexa nos parâmetros e veja o efeito, que é o que o último objetivo da aula pede: <em>analisar como taxa de mutação e tamanho da população influenciam o resultado</em>.</p>
+  </div>
+  <div class="lab" id="labtsp-box">
+    <div class="lab-head">
+      <h3>Evolução de rotas</h3>
+      <div class="segmented" role="group" aria-label="Tipo de mutação">
+        <button class="seg" data-mut="inversion" aria-pressed="true">Inversion</button>
+        <button class="seg" data-mut="swap" aria-pressed="false">Swap</button>
+      </div>
+    </div>
+    <div class="fields">
+      <div class="slider"><span class="lbl">Cidades</span><input id="tn" type="range" min="6" max="60" step="1" value="25"><output></output></div>
+      <div class="slider"><span class="lbl">Tamanho da população</span><input id="tpop" type="range" min="4" max="300" step="2" value="80"><output></output></div>
+      <div class="slider"><span class="lbl">Taxa de mutação</span><input id="tmut" type="range" min="0" max="1" step="0.01" value="0.15" data-fmt="pct"><output></output></div>
+      <div class="slider"><span class="lbl">Elitismo (nº de melhores)</span><input id="telite" type="range" min="0" max="10" step="1" value="2"><output></output></div>
+    </div>
+    <div class="lab-body">
+      <div>
+        <canvas class="cv smooth" id="tmapa" width="560" height="380" role="img" aria-label="Mapa com as cidades e a melhor rota encontrada"></canvas>
+        <div class="ctrls">
+          <button class="ctrl" id="trun">Rodar</button>
+          <button class="ctrl ghost" id="tstep">+1 geração</button>
+          <button class="ctrl ghost" id="tnew">Novas cidades</button>
+          <button class="ctrl ghost" id="treset">Reiniciar população</button>
+        </div>
+      </div>
+      <div>
+        <div class="readout">
+          <div class="row"><span class="k">Geração</span><span class="mono" id="tgen">0</span></div>
+          <div class="row"><span class="k">Melhor rota</span><span class="mono" id="tbest">—</span></div>
+          <div class="row"><span class="k">1ª geração</span><span class="mono" id="tfirst">—</span></div>
+          <div class="row"><span class="k">Melhora</span><span class="mono" id="timp">—</span></div>
+          <div class="row"><span class="k">Sem melhora</span><span class="mono" id="tstall">0 gerações</span></div>
+        </div>
+        <p class="lbl" style="margin:16px 0 6px">Melhor distância por geração</p>
+        <canvas class="cv smooth" id="tchart" width="360" height="130" role="img" aria-label="Gráfico da melhor distância ao longo das gerações"></canvas>
+      </div>
+    </div>
+    <p class="hint" style="margin-top:14px">Experimentos: (1) mutação 0 % → a população converge cedo e trava; (2) mutação 100 % → ruído, a curva não desce; (3) população 4 → muito mais lenta e instável que 150; (4) elitismo 0 → a melhor distância pode <em>piorar</em> de uma geração para outra.</p>
+  </div>
+</section>
+
+<!-- ================= SELEÇÃO ================= -->
+<section id="selecao">
+  <h2><span class="num">Aula 11 · operadores</span>Estratégias de seleção</h2>
+  <div class="scroller"><table>
+    <thead><tr><th>Estratégia</th><th>Como funciona</th><th>Característica</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Roleta</strong> (Roulette Wheel)</td><td>Probabilidade de seleção proporcional ao fitness</td><td>Favorece os melhores, mas mantém diversidade</td></tr>
+      <tr><td><strong>Torneio</strong> (Tournament)</td><td>Sorteia alguns indivíduos e fica com o melhor deles</td><td>Simples; controla a pressão seletiva</td></tr>
+      <tr><td><strong>Ranking</strong> (Rank)</td><td>Ordena por fitness; a seleção depende da posição</td><td>Reduz a influência de fitness extremos</td></tr>
+      <tr><td><strong>Elitismo</strong></td><td>Os melhores passam direto para a próxima geração</td><td>Garante que boas soluções não se percam</td></tr>
+    </tbody>
+  </table></div>
+  <div class="lab">
+    <div class="lab-head"><h3>Roleta na população do slide</h3></div>
+    <p class="hint">Fitness = x² para <code>0011, 1010, 1111, 0101</code>. A fatia de cada um é fitness / soma.</p>
+    <div id="roleta"></div>
+  </div>
+  <div class="callout">
+    <span class="tag">Roleta × ranking</span>
+    <p>Na roleta, o <code>1111</code> (fitness 225) fica com ≈ 63 % da roleta e quase monopoliza a reprodução — um fitness extremo domina. No ranking, só a <em>posição</em> conta (1º, 2º, 3º, 4º), e a vantagem dele cai.</p>
+  </div>
+</section>
+
+<!-- ================= CRUZAMENTO ================= -->
+<section id="cruzamento">
+  <h2><span class="num">Aula 11 · operadores</span>Cruzamento para permutações: PMX e OX</h2>
+  <div class="prose">
+    <p>No TSP, uma rota não pode repetir cidade. O <strong>crossover de um ponto</strong> (cortar e colar) quebra isso: produz filhos com cidades repetidas e outras faltando. Por isso se usam operadores próprios:</p>
+  </div>
+  <div class="scroller"><table>
+    <thead><tr><th>Estratégia</th><th>Ideia</th><th>TSP?</th></tr></thead>
+    <tbody>
+      <tr><td>Crossover de um ponto</td><td>Divide os pais e combina as partes</td><td>⚠️ Problemático</td></tr>
+      <tr><td><strong>PMX</strong> (Partially Mapped)</td><td>Mantém posições e corrige duplicações por mapeamento</td><td>✅ Muito usado</td></tr>
+      <tr><td><strong>OX</strong> (Order Crossover)</td><td>Preserva a ordem relativa das cidades</td><td>✅ Excelente para TSP</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="lab" id="labpmx">
+    <div class="lab-head">
+      <h3>PMX e OX passo a passo</h3>
+      <div class="segmented" role="group" aria-label="Operador">
+        <button class="seg" data-op="pmx" aria-pressed="true">PMX</button>
+        <button class="seg" data-op="ox" aria-pressed="false">OX</button>
+      </div>
+    </div>
+    <p class="hint">Já vem com os pais do slide (cortes após as posições 3 e 6). Você pode trocar os pais (permutações de 1 a 9 separadas por vírgula ou espaço) e os cortes.</p>
+    <div class="fields">
+      <div class="field"><label for="p1">Pai 1</label><input id="p1" type="text" value="1 2 3 4 5 6 7 8 9"></div>
+      <div class="field"><label for="p2">Pai 2</label><input id="p2" type="text" value="9 3 7 8 2 6 5 1 4"></div>
+      <div class="field"><label for="c1">Corte 1 (após a posição)</label><input id="c1" type="number" min="1" max="8" value="3"></div>
+      <div class="field"><label for="c2">Corte 2 (após a posição)</label><input id="c2" type="number" min="2" max="9" value="7"></div>
+    </div>
+    <p class="note" id="pmxerr" style="color:var(--bad)"></p>
+    <div class="readout" id="pmxout"></div>
+    <div class="ctrls"><button class="ctrl ghost" id="pmxrand">Pais aleatórios</button><button class="ctrl ghost" id="pmxslide">Pais do slide</button></div>
+    <p class="hint" style="margin-top:14px">Atenção: no slide os cortes ficam <em>depois</em> da 3ª e da 7ª posição (<code>[1,2,3 | 4,5,6,7 | 8,9]</code>), então a sub-cadeia é a 4ª a 7ª. Aqui o "corte 2 = 7" significa que o trecho termina na posição 7.</p>
+  </div>
+</section>
+
+<!-- ================= MUTAÇÃO ================= -->
+<section id="mutacao">
+  <h2><span class="num">Aula 11 · operadores</span>Estratégias de mutação</h2>
+  <div class="scroller"><table>
+    <thead><tr><th>Estratégia</th><th>A B C D E F G →</th><th>Característica</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Swap</strong></td><td class="mono">A F C D E B G</td><td>Troca duas posições. A menos destrutiva; boa para ajuste fino no fim.</td></tr>
+      <tr><td><strong>Insertion</strong></td><td class="mono">A C D E F B G</td><td>Remove um elemento e o insere em outra posição, deslocando os demais. Perturbação moderada.</td></tr>
+      <tr><td><strong>Inversion</strong></td><td class="mono">A F E D C B G</td><td>Inverte um trecho inteiro. Preserva vizinhanças; no TSP desfaz cruzamentos de rota (princípio do 2-opt).</td></tr>
+    </tbody>
+  </table></div>
+  <div class="lab">
+    <div class="lab-head"><h3>Experimente as três</h3></div>
+    <div class="fields">
+      <div class="field"><label for="mseq">Sequência</label><input id="mseq" type="text" value="A B C D E F G"></div>
+      <div class="field"><label for="mi">Posição i (começa em 1)</label><input id="mi" type="number" min="1" max="7" value="2"></div>
+      <div class="field"><label for="mj">Posição j</label><input id="mj" type="number" min="1" max="7" value="6"></div>
+    </div>
+    <div class="readout" id="mout"></div>
+  </div>
+</section>
+
+<!-- ================= SUBSTITUIÇÃO ================= -->
+<section id="substituicao">
+  <h2><span class="num">Aula 11 · operadores</span>Estratégias de substituição</h2>
+  <div class="scroller"><table>
+    <thead><tr><th>Estratégia</th><th>Como funciona</th><th>Característica</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Geracional</strong></td><td>Toda a população é substituída pelos filhos</td><td>Simples e a mais comum</td></tr>
+      <tr><td><strong>Geracional + elitismo</strong></td><td>Substitui tudo, mas preserva os melhores (ex.: top 1–5 %)</td><td>Evita perder boas soluções; muito recomendada</td></tr>
+      <tr><td><strong>Steady-state</strong></td><td>Escolhe 2 pais, gera 2 filhos que substituem os 2 <em>piores</em>; o resto continua</td><td>Mais continuidade entre gerações</td></tr>
+      <tr><td><strong>Substituição dos piores</strong></td><td>Novos indivíduos entram no lugar dos de menor fitness</td><td>Favorece a permanência dos melhores</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout">
+    <span class="tag">Por que elitismo?</span>
+    <p>Na substituição geracional pura, o cruzamento ou a mutação podem estragar a melhor rota que já existia. O elitismo copia o top 1 % a 5 % intacto e preenche o restante com filhos. No lab do TSP, ponha elitismo em 0 e observe a melhor distância oscilar.</p>
+  </div>
+</section>
+
+<!-- ================= AUTOTESTE ================= -->
+<section id="autoteste">
+  <h2><span class="num">Último passo</span>Autoteste</h2>
+  <p class="prose">Responda de cabeça e só então clique para conferir.</p>
+  <div class="cards" id="cards"></div>
+  <div class="pager"><a href="index.html">← Início</a><a href="simulado2.html">Simulado das aulas novas →</a></div>
+</section>
+
+</main>
+</div>
+
+<footer>
+  <p>Fonte: slides da aula 11 (Algoritmos genéticos) e material do caixeiro viajante. Bibliografia: Russell &amp; Norvig, <em>Inteligência Artificial: Uma Abordagem Moderna</em>, 2022.</p>
+</footer>
+</div>
+
+<script src="comum.js"></script>
+<script>
+(function(){
+  "use strict";
+  ligarSliders();
+  sumarioAtivo();
+
+  /* ============ LAB x² ============ */
+  var bits4 = function(x){ return ("0000" + x.toString(2)).slice(-4); };
+  var pop = [3,10,15,5], gen = 0, hist = [], selMetodo = "roleta", timerX = null;
+  var $ = function(id){ return document.getElementById(id); };
+
+  function genesHTML(s, opts){
+    opts = opts || {};
+    var h = '<span class="genes">';
+    for (var i = 0; i < s.length; i++){
+      var c = "gene";
+      if (opts.corte != null && i < opts.corte) c += " cut";
+      if (opts.mut && opts.mut.indexOf(i) >= 0) c = "gene mut";
+      h += '<span class="' + c + '">' + s[i] + '</span>';
+    }
+    return h + '</span>';
+  }
+
+  function estatX(){
+    var f = pop.map(function(x){ return x*x; });
+    var soma = f.reduce(function(a,b){ return a+b; }, 0);
+    return { f:f, soma:soma, melhor:Math.max.apply(null, f), media:soma/pop.length };
+  }
+
+  function desenhaX(){
+    var e = estatX(), h = "";
+    var ordem = pop.map(function(x,i){ return i; });
+    ordem.forEach(function(i){
+      var x = pop[i], p = e.soma ? e.f[i]/e.soma : 1/pop.length;
+      h += '<tr><td class="num">' + (i+1) + '</td><td>' + genesHTML(bits4(x)) + '</td><td class="num">' + x +
+           '</td><td class="num">' + e.f[i] + '</td><td><div class="bar"><span style="width:' + Math.round(p*100) + '%"></span></div>' +
+           '<span class="mono" style="font-size:.74rem;color:var(--ink-soft)">' + (p*100).toFixed(1) + '%</span></td></tr>';
+    });
+    $("x2tab").innerHTML = h;
+    $("x2gen").textContent = gen;
+    $("x2best").textContent = e.melhor + (e.melhor === 225 ? "  (ótimo!)" : "");
+    $("x2avg").textContent = e.media.toFixed(1).replace(".", ",");
+    $("x2hist").innerHTML = hist.slice(-8).map(function(r){ return "G" + r.g + ": melhor " + r.b + ", média " + r.m.toFixed(0); }).join("<br>") || "—";
+  }
+
+  function escolhe(f, soma){
+    if (selMetodo === "torneio"){
+      var a = sorteio(pop.length), b = sorteio(pop.length);
+      return f[a] >= f[b] ? a : b;
+    }
+    if (!soma) return sorteio(pop.length);
+    var r = Math.random()*soma, acc = 0;
+    for (var i = 0; i < pop.length; i++){ acc += f[i]; if (r <= acc) return i; }
+    return pop.length - 1;
+  }
+
+  function proxX(){
+    var e = estatX();
+    hist.push({g:gen, b:e.melhor, m:e.media});
+    var pm = parseFloat($("x2mut").value), elite = $("x2eli").value === "1";
+    var novos = [], log = [];
+    if (elite){
+      var ib = e.f.indexOf(e.melhor);
+      novos.push(pop[ib]);
+      log.push('<b>Elitismo:</b> ' + genesHTML(bits4(pop[ib])) + ' passa direto.');
+    }
+    while (novos.length < pop.length){
+      var ia = escolhe(e.f, e.soma), ib2 = escolhe(e.f, e.soma);
+      var A = bits4(pop[ia]), B = bits4(pop[ib2]);
+      var corte = 1 + sorteio(3);
+      var f1 = A.slice(0,corte) + B.slice(corte), f2 = B.slice(0,corte) + A.slice(corte);
+      var m1 = [], m2 = [];
+      var g1 = f1.split("").map(function(c,i){ if (Math.random() < pm){ m1.push(i); return c === "1" ? "0" : "1"; } return c; }).join("");
+      var g2 = f2.split("").map(function(c,i){ if (Math.random() < pm){ m2.push(i); return c === "1" ? "0" : "1"; } return c; }).join("");
+      log.push('Pais ' + genesHTML(A, {corte:corte}) + ' × ' + genesHTML(B, {corte:corte}) + ' (corte após o bit ' + corte + ')<br>' +
+               '→ filhos ' + genesHTML(f1) + ' ' + genesHTML(f2) +
+               ((m1.length || m2.length) ? '<br>→ após mutação ' + genesHTML(g1, {mut:m1}) + ' ' + genesHTML(g2, {mut:m2}) : '<br>→ sem mutação'));
+      novos.push(parseInt(g1,2));
+      if (novos.length < pop.length) novos.push(parseInt(g2,2));
+    }
+    pop = novos; gen++;
+    $("x2log").innerHTML = log.join("<hr style='border:0;border-top:1px solid var(--line);margin:8px 0'>");
+    desenhaX();
+  }
+
+  function resetX(p){
+    pop = p; gen = 0; hist = [];
+    $("x2log").textContent = "Aperte “Próxima geração”.";
+    pararX(); desenhaX();
+  }
+  function pararX(){ clearInterval(timerX); timerX = null; $("x2auto").textContent = "Auto"; }
+
+  $("x2prox").onclick = proxX;
+  $("x2auto").onclick = function(){
+    if (timerX){ pararX(); return; }
+    this.textContent = "Pausar";
+    timerX = setInterval(function(){ proxX(); if (estatX().melhor === 225 && gen > 40) pararX(); if (gen > 200) pararX(); }, 450);
+  };
+  $("x2slide").onclick = function(){ $("x2tam").value = "4"; resetX([3,10,15,5]); };
+  $("x2rand").onclick = function(){
+    var n = parseInt($("x2tam").value, 10), p = [];
+    for (var i = 0; i < n; i++) p.push(sorteio(16));
+    resetX(p);
+  };
+  $("x2tam").onchange = function(){ $("x2rand").click(); };
+  document.querySelectorAll("#labx2 [data-sel]").forEach(function(b){
+    b.onclick = function(){
+      selMetodo = b.getAttribute("data-sel");
+      document.querySelectorAll("#labx2 [data-sel]").forEach(function(o){ o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+    };
+  });
+  desenhaX();
+
+  /* ============ força bruta ============ */
+  function fatorial(n){ var r = 1; for (var i = 2; i <= n; i++) r *= i; return r; }
+  function fmtGrande(x){
+    if (x < 1e6) return Math.round(x).toLocaleString("pt-BR");
+    var e = Math.floor(Math.log10(x)), m = x / Math.pow(10, e);
+    return m.toFixed(2).replace(".", ",") + " × 10^" + e;
+  }
+  function fmtTempo(s){
+    if (s < 1e-6) return "menos de 1 microssegundo";
+    if (s < 1) return s.toFixed(4).replace(".", ",") + " segundos";
+    if (s < 60) return s.toFixed(1).replace(".", ",") + " segundos";
+    if (s < 3600) return (s/60).toFixed(1).replace(".", ",") + " minutos";
+    if (s < 86400) return (s/3600).toFixed(1).replace(".", ",") + " horas";
+    var a = s / 31557600;
+    if (a < 1) return (s/86400).toFixed(1).replace(".", ",") + " dias";
+    if (a < 1e6) return a.toLocaleString("pt-BR", {maximumFractionDigits:1}) + " anos";
+    return fmtGrande(a) + " anos";
+  }
+  function fb(){
+    var n = parseInt($("fbn").value, 10), r = parseFloat($("fbr").value);
+    var rotas = fatorial(n-1);
+    $("fbrot").textContent = "(" + n + " − 1)! = " + fmtGrande(rotas);
+    $("fbtempo").textContent = fmtTempo(rotas / r);
+  }
+  $("fbn").addEventListener("input", fb); $("fbr").addEventListener("change", fb); fb();
+
+  /* ============ LAB TSP ============ */
+  var cv = $("tmapa"), cx = cv.getContext("2d"), cc = $("tchart"), cx2 = cc.getContext("2d");
+  var cid = [], D = [], P = [], dists = [], T = { gen:0, primeira:0, melhor:Infinity, parado:0, hist:[], timer:null, mut:"inversion" };
+
+  function novasCidades(){
+    var n = parseInt($("tn").value, 10);
+    cid = [];
+    for (var i = 0; i < n; i++) cid.push([30 + Math.random()*(cv.width-60), 30 + Math.random()*(cv.height-60)]);
+    D = cid.map(function(a){ return cid.map(function(b){ return Math.hypot(a[0]-b[0], a[1]-b[1]); }); });
+    reiniciaPop();
+  }
+  function comprimento(r){
+    var s = 0;
+    for (var i = 0; i < r.length; i++) s += D[r[i]][r[(i+1) % r.length]];
+    return s;
+  }
+  function reiniciaPop(){
+    pararT();
+    var n = cid.length, N = parseInt($("tpop").value, 10), base = [];
+    for (var i = 0; i < n; i++) base.push(i);
+    P = [];
+    for (var k = 0; k < N; k++) P.push(embaralhar(base));
+    dists = P.map(comprimento);
+    T.gen = 0; T.hist = []; T.parado = 0;
+    T.melhor = Math.min.apply(null, dists);
+    T.primeira = T.melhor; T.hist.push(T.melhor);
+    desenhaT();
+  }
+  function ox(p1, p2){
+    var n = p1.length, a = sorteio(n), b = sorteio(n);
+    if (a > b){ var t = a; a = b; b = t; }
+    var f = new Array(n), usado = {};
+    for (var i = a; i <= b; i++){ f[i] = p1[i]; usado[p1[i]] = true; }
+    var pos = (b + 1) % n;
+    for (var k = 0; k < n; k++){
+      var g = p2[(b + 1 + k) % n];
+      if (!usado[g]){ f[pos] = g; pos = (pos + 1) % n; }
+    }
+    return f;
+  }
+  function mutaT(r){
+    var n = r.length, i = sorteio(n), j = sorteio(n);
+    if (T.mut === "swap"){ var t = r[i]; r[i] = r[j]; r[j] = t; }
+    else { if (i > j){ var u = i; i = j; j = u; } while (i < j){ var w = r[i]; r[i] = r[j]; r[j] = w; i++; j--; } }
+  }
+  function torneio(){
+    var best = -1, k = 3;
+    for (var i = 0; i < k; i++){ var c = sorteio(P.length); if (best < 0 || dists[c] < dists[best]) best = c; }
+    return best;
+  }
+  function geracao(){
+    var N = P.length, pm = parseFloat($("tmut").value), E = Math.min(parseInt($("telite").value, 10), N);
+    var ordem = dists.map(function(d,i){ return i; }).sort(function(a,b){ return dists[a]-dists[b]; });
+    var nova = [];
+    for (var e = 0; e < E; e++) nova.push(P[ordem[e]].slice());
+    while (nova.length < N){
+      var f = ox(P[torneio()], P[torneio()]);
+      if (Math.random() < pm) mutaT(f);
+      nova.push(f);
+    }
+    P = nova; dists = P.map(comprimento);
+    var m = Math.min.apply(null, dists);
+    if (m < T.melhor - 1e-9) T.parado = 0; else T.parado++;
+    T.melhor = Math.min(T.melhor, m);
+    if (E === 0) T.melhor = m;           /* sem elitismo a melhor pode piorar */
+    T.gen++; T.hist.push(m);
+    desenhaT();
+  }
+  function desenhaT(){
+    var n = cid.length;
+    var ib = dists.indexOf(Math.min.apply(null, dists)), r = P[ib];
+    cx.clearRect(0, 0, cv.width, cv.height);
+    cx.lineWidth = 2; cx.strokeStyle = corTema("--accent"); cx.lineJoin = "round";
+    cx.beginPath();
+    for (var i = 0; i <= n; i++){ var c = cid[r[i % n]]; if (i === 0) cx.moveTo(c[0], c[1]); else cx.lineTo(c[0], c[1]); }
+    cx.stroke();
+    for (var k = 0; k < n; k++){
+      cx.beginPath(); cx.arc(cid[k][0], cid[k][1], 5, 0, 7);
+      cx.fillStyle = (k === r[0]) ? corTema("--goal") : corTema("--ink"); cx.fill();
+    }
+    var atual = Math.min.apply(null, dists);
+    $("tgen").textContent = T.gen;
+    $("tbest").textContent = atual.toFixed(0);
+    $("tfirst").textContent = T.primeira.toFixed(0);
+    $("timp").textContent = ((1 - atual / T.primeira) * 100).toFixed(1).replace(".", ",") + " %";
+    $("tstall").textContent = T.parado + " gerações";
+    /* gráfico */
+    var w = cc.width, h = cc.height, H = T.hist, mx = Math.max.apply(null, H), mn = Math.min.apply(null, H);
+    cx2.clearRect(0, 0, w, h);
+    cx2.strokeStyle = corTema("--line"); cx2.lineWidth = 1; cx2.strokeRect(0.5, 0.5, w-1, h-1);
+    cx2.strokeStyle = corTema("--accent"); cx2.lineWidth = 2; cx2.beginPath();
+    for (var q = 0; q < H.length; q++){
+      var xx = H.length === 1 ? 0 : q / (H.length - 1) * (w - 12) + 6;
+      var yy = mx === mn ? h/2 : 8 + (H[q] - mn) / (mx - mn) * (h - 16);
+      if (q === 0) cx2.moveTo(xx, yy); else cx2.lineTo(xx, yy);
+    }
+    cx2.stroke();
+  }
+  function pararT(){ clearInterval(T.timer); T.timer = null; $("trun").textContent = "Rodar"; }
+  $("trun").onclick = function(){
+    if (T.timer){ pararT(); return; }
+    this.textContent = "Pausar";
+    T.timer = setInterval(function(){ for (var i = 0; i < 3; i++) geracao(); if (T.gen >= 5000) pararT(); }, 40);
+  };
+  $("tstep").onclick = function(){ pararT(); geracao(); };
+  $("tnew").onclick = novasCidades;
+  $("treset").onclick = reiniciaPop;
+  $("tn").addEventListener("change", novasCidades);
+  $("tpop").addEventListener("change", reiniciaPop);
+  document.querySelectorAll("[data-mut]").forEach(function(b){
+    b.onclick = function(){
+      T.mut = b.getAttribute("data-mut");
+      document.querySelectorAll("[data-mut]").forEach(function(o){ o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+    };
+  });
+  novasCidades();
+  window.addEventListener("pagehide", pararT);
+
+  /* ============ roleta ============ */
+  (function(){
+    var xs = [3,10,15,5], f = xs.map(function(x){ return x*x; }), s = f.reduce(function(a,b){ return a+b; }, 0);
+    var h = '<div class="scroller" style="margin:0"><table style="min-width:0"><thead><tr><th>Indivíduo</th><th class="num">x</th><th class="num">Fitness</th><th class="num">Fatia</th><th>Roleta</th><th class="num">Posição (ranking)</th></tr></thead><tbody>';
+    var rk = f.map(function(v,i){ return i; }).sort(function(a,b){ return f[b]-f[a]; });
+    xs.forEach(function(x,i){
+      var p = f[i]/s * 100;
+      h += '<tr><td class="mono">' + bits4(x) + '</td><td class="num">' + x + '</td><td class="num">' + f[i] + '</td><td class="num">' + p.toFixed(1) +
+           ' %</td><td style="min-width:120px"><div class="bar"><span style="width:' + p + '%"></span></div></td><td class="num">' + (rk.indexOf(i)+1) + 'º</td></tr>';
+    });
+    $("roleta").innerHTML = h + '</tbody></table></div><p class="hint" style="margin:10px 0 0">Soma dos fitness = ' + s + '. Os valores 9 + 100 + 225 + 25 = 359; 225/359 ≈ 62,7 %.</p>';
+  })();
+
+  /* ============ PMX / OX ============ */
+  var opAtual = "pmx";
+  function ler(id){ return $(id).value.split(/[\s,;]+/).filter(Boolean).map(Number); }
+  function ehPerm(a){
+    var n = a.length, vis = {};
+    if (n < 4 || n > 12) return false;
+    for (var i = 0; i < n; i++){ if (!(a[i] >= 1 && a[i] <= n) || vis[a[i]]) return false; vis[a[i]] = true; }
+    return true;
+  }
+  function pmx(p1, p2, a, b){      /* sub-cadeia = índices a..b-1 */
+    var n = p1.length, f = new Array(n), mapa = {}, seg = {}, i;
+    for (i = a; i < b; i++){ f[i] = p1[i]; seg[p1[i]] = true; mapa[p1[i]] = p2[i]; }
+    var passos = [];
+    for (i = 0; i < n; i++){
+      if (i >= a && i < b) continue;
+      var g = p2[i], cadeia = [g];
+      while (seg[g]){ g = mapa[g]; cadeia.push(g); }
+      f[i] = g;
+      passos.push("posição " + (i+1) + ": " + cadeia.join(" → ") + (cadeia.length > 1 ? " (conflito resolvido pelo mapeamento)" : " (sem conflito)"));
+    }
+    var mp = []; for (i = a; i < b; i++) mp.push(p1[i] + " ↔ " + p2[i]);
+    return { filho:f, passos:passos, mapa:mp };
+  }
+  function oxf(p1, p2, a, b){
+    var n = p1.length, f = new Array(n), seg = {}, i;
+    for (i = a; i < b; i++){ f[i] = p1[i]; seg[p1[i]] = true; }
+    var seq = [];
+    for (i = 0; i < n; i++) seq.push(p2[(b + i) % n]);
+    var livres = seq.filter(function(g){ return !seg[g]; });
+    var pos = b % n;
+    livres.forEach(function(g){ f[pos] = g; pos = (pos + 1) % n; });
+    return { filho:f, passos:["Genes do outro pai a partir do 2º corte: " + seq.join(", "),
+                              "Sem os já presentes na sub-cadeia: " + livres.join(", "),
+                              "Preenchidos a partir do 2º corte, dando a volta: " + f.join(", ")] };
+  }
+  function genesArr(arr, a, b, cls){
+    return '<span class="genes">' + arr.map(function(g,i){
+      var c = "gene" + ((i >= a && i < b) ? " cut" : "");
+      if (cls && cls[i]) c += " new";
+      return '<span class="' + c + '">' + g + '</span>';
+    }).join("") + '</span>';
+  }
+  function pmxRender(){
+    var p1 = ler("p1"), p2 = ler("p2"), a = parseInt($("c1").value, 10), b = parseInt($("c2").value, 10), err = $("pmxerr");
+    var n = p1.length;
+    if (!ehPerm(p1) || !ehPerm(p2) || p1.length !== p2.length){
+      err.textContent = "Os pais precisam ser permutações de 1 a n (4 ≤ n ≤ 12), com o mesmo tamanho.";
+      $("pmxout").innerHTML = ""; return;
+    }
+    if (!(a >= 1 && b > a && b <= n)){ err.textContent = "Cortes inválidos: use 1 ≤ corte 1 < corte 2 ≤ " + n + "."; $("pmxout").innerHTML = ""; return; }
+    err.textContent = "";
+    var A = pmx, f = opAtual === "pmx" ? [pmx(p1,p2,a,b), pmx(p2,p1,a,b)] : [oxf(p1,p2,a,b), oxf(p2,p1,a,b)];
+    var h = '<div class="row"><span class="k">Pai 1</span>' + genesArr(p1, a, b) + '</div>' +
+            '<div class="row"><span class="k">Pai 2</span>' + genesArr(p2, a, b) + '</div>';
+    f.forEach(function(r, idx){
+      var novo = {}, outro = idx === 0 ? p1 : p2;
+      r.filho.forEach(function(g,i){ if (!(i >= a && i < b)) novo[i] = true; });
+      h += '<div class="row"><span class="k">Filho ' + (idx+1) + '</span><div>' + genesArr(r.filho, a, b, novo) +
+           '<p class="note" style="margin-top:8px">' + (r.mapa ? '<b>Mapeamento:</b> ' + r.mapa.join(" · ") + '<br>' : '') +
+           r.passos.join('<br>') + '</p></div></div>';
+    });
+    $("pmxout").innerHTML = h;
+  }
+  document.querySelectorAll("[data-op]").forEach(function(b){
+    b.onclick = function(){
+      opAtual = b.getAttribute("data-op");
+      document.querySelectorAll("[data-op]").forEach(function(o){ o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+      pmxRender();
+    };
+  });
+  ["p1","p2","c1","c2"].forEach(function(id){ $(id).addEventListener("input", pmxRender); });
+  $("pmxslide").onclick = function(){ $("p1").value = "1 2 3 4 5 6 7 8 9"; $("p2").value = "9 3 7 8 2 6 5 1 4"; $("c1").value = 3; $("c2").value = 7; pmxRender(); };
+  $("pmxrand").onclick = function(){
+    var base = [1,2,3,4,5,6,7,8,9];
+    $("p1").value = embaralhar(base).join(" "); $("p2").value = embaralhar(base).join(" ");
+    var a = 1 + sorteio(4), b = a + 2 + sorteio(3); $("c1").value = a; $("c2").value = Math.min(b, 9); pmxRender();
+  };
+  pmxRender();
+
+  /* ============ mutações ============ */
+  function mutRender(){
+    var s = $("mseq").value.split(/[\s,;]+/).filter(Boolean), n = s.length;
+    var i = parseInt($("mi").value, 10) - 1, j = parseInt($("mj").value, 10) - 1;
+    if (n < 3 || !(i >= 0 && j < n && i < j)){ $("mout").innerHTML = '<p class="note" style="color:var(--bad)">Use pelo menos 3 elementos e posições com 1 ≤ i < j ≤ ' + n + '.</p>'; return; }
+    var sw = s.slice(), t = sw[i]; sw[i] = sw[j]; sw[j] = t;
+    var ins = s.slice(); var el = ins.splice(i, 1)[0]; ins.splice(j, 0, el);
+    var inv = s.slice(0,i).concat(s.slice(i, j+1).reverse(), s.slice(j+1));
+    function lin(nome, arr, mudou){
+      return '<div class="row"><span class="k">' + nome + '</span><span class="genes">' + arr.map(function(g,k){
+        return '<span class="gene' + (mudou(k) ? ' mut' : '') + '">' + g + '</span>'; }).join("") + '</span></div>';
+    }
+    $("mout").innerHTML = lin("Original", s, function(){ return false; }) +
+      lin("Swap", sw, function(k){ return k === i || k === j; }) +
+      lin("Insertion", ins, function(k){ return k >= i && k <= j; }) +
+      lin("Inversion", inv, function(k){ return k >= i && k <= j; });
+  }
+  ["mseq","mi","mj"].forEach(function(id){ $(id).addEventListener("input", mutRender); });
+  mutRender();
+
+  /* ============ flashcards ============ */
+  montarCards("cards", [
+    ["Qual a inspiração dos algoritmos genéticos e qual a ideia central?", "A seleção natural: soluções mais aptas têm maior chance de ser selecionadas e gerar descendentes, de modo que a cada geração se obtêm soluções melhores."],
+    ["Defina indivíduo, população, gene, cromossomo e geração.", "Indivíduo = uma solução; população = conjunto de soluções; cromossomo = codificação da solução; gene = parte dela (um bit, uma cidade); geração = uma iteração do algoritmo."],
+    ["O que é fitness? Ele é a resposta do problema?", "É a função de aptidão: mede a qualidade da solução. Não é necessariamente a resposta; serve para comparar soluções. Em minimização usa-se, por exemplo, 1 / distância."],
+    ["Por que o crossover não pode simplesmente escolher um dos pais?", "Porque o objetivo é combinar características das soluções existentes para gerar algo novo."],
+    ["Qual o papel da mutação e qual o risco de uma taxa alta demais?", "Introduz diversidade e evita estagnação. Em taxa muito alta, as boas características dos pais se perdem e a busca vira aleatória."],
+    ["Quais as condições de parada típicas?", "Um número fixo de gerações, ou o fitness parar de melhorar por muitas gerações seguidas."],
+    ["Quantas rotas tem um TSP de n cidades (inicial fixa)? Por que a força bruta não escala?", "(n − 1)! rotas. 15 cidades já são ≈ 87 bilhões (~20 min); 20 cidades ≈ 1,2 × 10¹⁷ (~73 anos). O espaço de busca cresce de forma fatorial."],
+    ["Força bruta × algoritmo genético no TSP?", "Força bruta garante o ótimo se terminar; o AG procura uma solução muito boa em tempo viável, mas não garante a ótima."],
+    ["Por que não usar crossover de um ponto no TSP?", "Gera filhos com cidades repetidas e cidades faltando (rota inválida). Usam-se PMX ou OX, que mantêm uma permutação válida."],
+    ["Como o PMX resolve conflitos?", "Copia uma sub-cadeia de um pai, monta o mapeamento entre as sub-cadeias dos dois pais e preenche o resto com o outro pai; se o gene já está na sub-cadeia, segue o mapeamento (transitivamente) até achar um livre."],
+    ["Como o OX monta o filho?", "Copia a sub-cadeia de um pai; lista os genes do outro pai a partir do 2º corte, remove os já presentes e preenche os espaços a partir do 2º corte, dando a volta."],
+    ["Swap × insertion × inversion?", "Swap troca duas posições (menos destrutiva). Insertion remove um elemento e o reinsere em outra posição. Inversion inverte um trecho — preserva vizinhanças e desfaz cruzamentos no TSP (princípio do 2-opt)."],
+    ["Roleta × torneio × ranking × elitismo?", "Roleta: chance proporcional ao fitness. Torneio: melhor entre alguns sorteados. Ranking: depende da posição. Elitismo: os melhores passam direto."],
+    ["Geracional × steady-state?", "Geracional substitui toda a população pelos filhos (com elitismo, preservando os melhores). Steady-state gera 2 filhos que substituem os 2 piores; o resto continua vivo."]
+  ]);
+})();
+</script>
+<script src="theme.js" defer></script>
+</body>
+</html>

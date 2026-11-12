@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Visão computacional: pixels, RGB/BGR, escala de cinza, detecção de bordas (Canny), HSV, segmentação por cor e o jogo com webcam, com simuladores no navegador.">
+  <title>Visão computacional — Inteligência Artificial</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E👁️%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="base.css">
+  <style>
+    .px{display:grid; grid-template-columns:repeat(8,1fr); gap:2px; max-width:420px; touch-action:none; user-select:none;}
+    .px div{aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:.68rem;
+      border:1px solid var(--line); border-radius:2px; cursor:crosshair;}
+    .swatch{width:100%; height:64px; border:1px solid var(--line); border-radius:3px;}
+    .cvs{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px;}
+    .cvs figure{margin:0;}
+    .cvs figcaption{font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-top:6px;}
+    .game{max-width:520px;}
+    input[type=color]{width:100%; height:42px; padding:2px; background:var(--surface-2); border:1px solid var(--line); border-radius:2px;}
+  </style>
+</head>
+<body>
+<div class="page">
+
+<nav class="topnav" aria-label="Páginas">
+  <a href="index.html">Início</a>
+  <a href="guia.html">Busca</a>
+  <a href="genetico.html">Genéticos</a>
+  <a href="pln.html">PLN</a>
+  <a href="visao.html" aria-current="page">Visão</a>
+  <a href="tracado.html">Traçado</a>
+  <a href="simulado.html">Simulado</a>
+  <a href="simulado2.html">Simulado 2</a>
+</nav>
+
+<header class="masthead">
+  <p class="eyebrow">Aula 15 · Inteligência Artificial</p>
+  <h1>Visão <em>computacional</em>.</h1>
+  <p class="lede">Como o computador "enxerga": uma imagem é uma matriz de números. Daí saem escala de cinza, bordas (Canny), segmentação por cor (HSV) e até um jogo controlado por uma bolinha colorida. Tudo roda aqui no navegador, sobre uma imagem de teste ou sobre uma foto sua.</p>
+  <ul class="priority">
+    <li><b>Fundamentos</b><span>Pixel, resolução, canais, RGB × BGR, tamanho em bytes.</span></li>
+    <li><b>Processamento</b><span>Cinza (0,299R + 0,587G + 0,114B), Canny e seus 5 passos, limiares.</span></li>
+    <li><b>Cor e objetos</b><span>HSV no OpenCV (H 0–179), máscara com inRange, centro por momentos.</span></li>
+  </ul>
+</header>
+
+<div class="shell">
+<nav class="rail" aria-label="Sumário">
+  <p>Sumário</p>
+  <a href="#oque">O que é</a>
+  <a href="#pixels">Pixels e resolução (lab)</a>
+  <a href="#cores">Canais, RGB e BGR (lab)</a>
+  <a href="#opencv">OpenCV básico</a>
+  <hr>
+  <a href="#imagem">Imagem de teste</a>
+  <a href="#canny">Bordas e Canny (lab)</a>
+  <a href="#hsv">HSV e segmentação (lab)</a>
+  <a href="#jogo">Jogo com webcam (lab)</a>
+  <hr>
+  <a href="#autoteste">Autoteste</a>
+</nav>
+
+<main>
+
+<!-- ============ O QUE É ============ -->
+<section id="oque">
+  <h2><span class="num">Aula 15</span>O que é visão computacional</h2>
+  <div class="prose">
+    <p><strong>Visão computacional</strong> é a área da IA que busca desenvolver sistemas capazes de <strong>interpretar e extrair informações de imagens e vídeos</strong>: identificar objetos, reconhecer pessoas e rostos, detectar movimento, classificar imagens, localizar elementos. O fluxo básico é <em>capturar</em> (registrar a imagem) → <em>processar</em> (modificar/analisar os pixels) → <em>interpretar</em> (por exemplo, "há um cachorro na imagem").</p>
+  </div>
+  <div class="scroller"><table>
+    <thead><tr><th>Campo</th><th>O que faz</th><th>Exemplos</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Processamento de imagens</strong></td><td>Modifica, melhora ou extrai características de uma imagem</td><td>Brilho/contraste, remover ruído, filtros, detectar bordas</td></tr>
+      <tr><td><strong>Visão computacional</strong></td><td>Extrai informações e interpreta o que há nas imagens/vídeos</td><td>Identificar um gato, detectar pedestre, contar objetos, reconhecer placa</td></tr>
+      <tr><td><strong>Inteligência artificial</strong></td><td>Campo mais amplo: aprendizagem, raciocínio, planejamento, decisão</td><td>Recomendação, assistentes, rotas, classificação por ML</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn">
+    <span class="tag">Armadilha</span>
+    <p>Um programa que só altera o brilho de uma foto <strong>não</strong> faz, necessariamente, visão computacional: pode ser apenas processamento de imagens. E <strong>detectar bordas não é reconhecer objetos</strong>.</p>
+  </div>
+
+  <h3>Onde aparece</h3>
+  <div class="scroller"><table>
+    <thead><tr><th>Aplicação</th><th>O que o sistema realiza</th></tr></thead>
+    <tbody>
+      <tr><td>Reconhecimento facial</td><td>Identifica ou verifica rostos</td></tr>
+      <tr><td>Veículos autônomos</td><td>Detecta veículos, pedestres, placas e faixas</td></tr>
+      <tr><td>Segurança</td><td>Identifica objetos, movimentos e situações de interesse</td></tr>
+      <tr><td>Medicina</td><td>Auxilia na identificação de padrões em radiografias, tomografias etc.</td></tr>
+      <tr><td>Indústria</td><td>Detecta defeitos em peças e produtos</td></tr>
+      <tr><td>Agricultura</td><td>Identifica plantas daninhas, pragas e sinais de doenças</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">Também: filtros de realidade aumentada, digitalização de documentos, pesquisa por imagens, leitura de placas, contagem de pessoas.</p>
+
+  <h3>Técnicas tradicionais × aprendizado de máquina</h3>
+  <div class="scroller"><table>
+    <thead><tr><th></th><th>Tradicionais</th><th>Aprendizado de máquina</th></tr></thead>
+    <tbody>
+      <tr><td>Como funcionam</td><td>Operações e regras definidas por um programador</td><td>Aprendem padrões a partir de dados</td></tr>
+      <tr><td>Características</td><td>Frequentemente definidas manualmente</td><td>Manuais ou aprendidas pelo modelo</td></tr>
+      <tr><td>Exemplos</td><td>Filtros, limiarização, detecção de bordas</td><td>Classificadores treinados, redes neurais convolucionais</td></tr>
+      <tr><td>Dados de treino</td><td>Não são necessários em muitas técnicas</td><td>Necessários no treinamento supervisionado</td></tr>
+      <tr><td>Vantagens</td><td>Simplicidade, controle, baixo custo</td><td>Reconhecem padrões complexos e variações</td></tr>
+      <tr><td>Limitações</td><td>Sofrem com iluminação, escala e aparência</td><td>Dependem de dados, treino e recursos computacionais</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose">
+    <p><strong>Limiarização (thresholding)</strong>: "se a intensidade do pixel é menor que X, é escuro". Regra do programador; o computador não aprende o que é um "objeto escuro". Já <strong>distinguir gatos de cachorros</strong> exige mostrar muitas imagens rotuladas a um modelo (ex.: rede neural), que depois classifica novas imagens, sem acertar necessariamente todas. As técnicas tradicionais continuam úteis (filtragem, ruído, bordas, preparação) e podem ser combinadas com ML.</p>
+  </div>
+</section>
+
+<!-- ============ PIXELS ============ -->
+<section id="pixels">
+  <h2><span class="num">Aula 15 · laboratório</span>Pixels e resolução</h2>
+  <div class="prose">
+    <p>Para o computador, uma imagem <strong>não é uma foto de um cachorro</strong>: é um conjunto de dados numéricos organizados. Uma imagem digital é feita de <strong>pixels</strong> (picture elements), o menor elemento individual; a <strong>resolução</strong> é a quantidade de pixels, geralmente largura × altura. Em escala de cinza de 8 bits, cada pixel vale de <strong>0 (preto) a 255 (branco)</strong>.</p>
+  </div>
+
+  <div class="lab" id="labpx">
+    <div class="lab-head"><h3>Imagem 8×8 em escala de cinza</h3>
+      <div class="segmented" role="group" aria-label="Exibir">
+        <button class="seg" data-px="val" aria-pressed="true">Valores</button>
+        <button class="seg" data-px="grad" aria-pressed="false">Gradiente (Sobel)</button>
+      </div>
+    </div>
+    <div class="lab-body">
+      <div>
+        <div class="px" id="pxgrid" role="img" aria-label="Grade 8 por 8 de pixels em escala de cinza"></div>
+        <div class="ctrls">
+          <button class="ctrl ghost" data-pre="borda">Borda vertical</button>
+          <button class="ctrl ghost" data-pre="grad">Gradiente suave</button>
+          <button class="ctrl ghost" data-pre="quad">Quadrado</button>
+          <button class="ctrl ghost" data-pre="zero">Limpar</button>
+        </div>
+      </div>
+      <div>
+        <div class="slider"><span class="lbl">Valor do pincel (clique e arraste na grade)</span><input id="pxbrush" type="range" min="0" max="255" value="220"><output></output></div>
+        <div class="readout" style="margin-top:14px" id="pxinfo"></div>
+        <p class="hint" style="margin-top:12px">No modo <em>Gradiente</em>, cada célula interna mostra |Gx| + |Gy| (operador Sobel 3×3): é alta onde a intensidade muda bruscamente. Pinte um degrau (esquerda escura, direita clara) e veja a "borda" aparecer.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="prose">
+    <p>Exemplo de linhas de pixels do slide: região homogênea <code>100 102 101 99 100</code> (variações pequenas: sem borda) × região com mudança brusca <code>20 22 19 <b>220</b> 225</code> (salto de ~200 entre vizinhos: forte evidência de borda).</p>
+  </div>
+
+  <div class="lab">
+    <div class="lab-head"><h3>Quantos valores uma imagem tem?</h3></div>
+    <div class="fields">
+      <div class="field"><label for="rw">Largura</label><input id="rw" type="number" min="1" value="1920"></div>
+      <div class="field"><label for="rh">Altura</label><input id="rh" type="number" min="1" value="1080"></div>
+      <div class="field"><label for="rc">Canais</label><select id="rc"><option value="1">1 (cinza)</option><option value="3" selected>3 (RGB/BGR)</option></select></div>
+    </div>
+    <div class="readout" id="resout"></div>
+    <div class="ctrls"><button class="ctrl ghost" data-res="640,480,3">640×480×3 (slide)</button><button class="ctrl ghost" data-res="1280,720,3">HD</button><button class="ctrl ghost" data-res="1920,1080,1">Full HD cinza</button><button class="ctrl ghost" data-res="3840,2160,3">4K</button></div>
+  </div>
+</section>
+
+<!-- ============ CORES ============ -->
+<section id="cores">
+  <h2><span class="num">Aula 15 · laboratório</span>Canais de cor: RGB, BGR, cinza e HSV</h2>
+  <div class="prose">
+    <p>Uma imagem colorida é <code>H × W × 3</code> (altura × largura × canais). <strong>RGB</strong> = Red, Green, Blue. Cuidado: o <strong>OpenCV armazena em ordem BGR</strong> ao carregar com <code>cv2.imread()</code>. Vermelho puro é <code>(255,0,0)</code> em RGB e <code>(0,0,255)</code> em BGR; o verde é igual nas duas ordens.</p>
+    <p>Para cinza, o OpenCV <strong>não faz a média</strong> dos canais: usa <code>Y = 0,299·R + 0,587·G + 0,114·B</code>, porque o olho é mais sensível ao verde do que ao azul.</p>
+  </div>
+  <div class="lab" id="labcor">
+    <div class="lab-head"><h3>Escolha uma cor</h3></div>
+    <div class="lab-body">
+      <div><input type="color" id="corin" value="#2ea043" aria-label="Cor"><div class="swatch" id="corsw" style="margin-top:10px"></div></div>
+      <div class="readout" id="corout"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ OPENCV ============ -->
+<section id="opencv">
+  <h2><span class="num">Aula 15 · Python</span>Primeiros passos com o OpenCV</h2>
+  <div class="prose"><p><strong>OpenCV</strong> (Open Source Computer Vision Library): biblioteca livre para visão computacional, processamento de imagens e ML, criada pela Intel em 2000, focada em eficiência e tempo real (reconhecimento facial, OCR, robótica, veículos autônomos, medicina). Instalação: <code>pip install opencv-python numpy</code>.</p></div>
+<pre><b>import</b> cv2
+
+imagem = cv2.<b>imread</b>("imagem.jpg")            <i># carrega do disco (em BGR)</i>
+<b>if</b> imagem <b>is None</b>:
+    print("Erro ao carregar a imagem!")
+<b>else</b>:
+    cv2.<b>imshow</b>("Original", imagem)           <i># exibe numa janela</i>
+    print(imagem.shape)                      <i># (480, 640, 3) → linhas, colunas, canais</i>
+    print(imagem.size // 3)                  <i># 307200 pixels</i>
+    print(imagem.dtype)                      <i># uint8 → inteiros de 0 a 255</i>
+
+    pixel = imagem[100, 200]                 <i># linha 100, coluna 200 → [B, G, R]</i>
+    azul, verde, vermelho = imagem[100,200,0], imagem[100,200,1], imagem[100,200,2]
+
+    cinza = cv2.<b>cvtColor</b>(imagem, cv2.COLOR_BGR2GRAY)   <i># shape (480, 640): sem o 3</i>
+    cv2.<b>waitKey</b>(0)                           <i># espera uma tecla</i>
+    cv2.<b>destroyAllWindows</b>()                  <i># fecha as janelas</i></pre>
+  <div class="callout warn">
+    <span class="tag">Linha e coluna, não x e y</span>
+    <p><code>imagem[100, 200]</code> é a <strong>linha 100, coluna 200</strong> (y primeiro, depois x). A imagem colorida tem shape <code>(480, 640, 3)</code>; a cinza, <code>(480, 640)</code>.</p>
+  </div>
+</section>
+
+<!-- ============ IMAGEM DE TESTE ============ -->
+<section id="imagem">
+  <h2><span class="num">Laboratório</span>Imagem de teste</h2>
+  <div class="prose"><p>Os laboratórios de bordas, HSV e jogo usam esta imagem. Use a cena sintética (bolas coloridas, uma delas sombreada) ou carregue uma foto sua: ela é processada só no seu navegador, nada é enviado.</p></div>
+  <div class="lab">
+    <div class="fields">
+      <div class="field"><label for="imgfile">Sua imagem (opcional)</label><input type="file" id="imgfile" accept="image/*"></div>
+      <div class="field"><label><input type="checkbox" id="imgnoise"> Adicionar ruído</label></div>
+      <div class="field"><button class="ctrl ghost" id="imgsint" type="button">Voltar à cena sintética</button></div>
+    </div>
+    <div class="cvs"><figure><canvas class="cv" id="src" width="320" height="240" aria-label="Imagem de teste"></canvas><figcaption>Original</figcaption></figure></div>
+  </div>
+</section>
+
+<!-- ============ CANNY ============ -->
+<section id="canny">
+  <h2><span class="num">Aula 15 · laboratório</span>Detecção de bordas: Canny</h2>
+  <div class="prose">
+    <p><strong>Bordas</strong> são regiões onde a intensidade muda significativamente (limite de objetos, iluminação, textura, contornos). Mede-se isso com <strong>gradientes</strong>: <code>Gx</code> (variação horizontal) e <code>Gy</code> (vertical); a magnitude, de forma simplificada, é <code>G = √(Gx² + Gy²)</code>.</p>
+    <p>O algoritmo de <strong>Canny</strong> (John Canny, 1986) tem cinco etapas:</p>
+    <ol>
+      <li><strong>Redução de ruído</strong>: suavização gaussiana (média ponderada, mais peso aos vizinhos próximos).</li>
+      <li><strong>Cálculo dos gradientes</strong> (operadores de Sobel).</li>
+      <li><strong>Supressão de não máximos</strong>: mantém só os máximos locais na direção do gradiente, deixando as bordas finas.</li>
+      <li><strong>Limiarização dupla</strong>: acima de <code>threshold2</code> = borda forte; entre os dois = fraca; abaixo de <code>threshold1</code> = não é borda.</li>
+      <li><strong>Histerese</strong>: bordas fracas só ficam se estiverem conectadas a bordas fortes.</li>
+    </ol>
+<pre>bordas = cv2.<b>Canny</b>(cinza, 100, 200)    <i># threshold1=100 (inferior), threshold2=200 (superior)</i></pre>
+    <p>Limites baixos → mais bordas (inclusive ruído). Limites altos → só as mudanças fortes. <strong>Não existe configuração universalmente melhor</strong>: depende da imagem e do objetivo. Outros parâmetros: <code>apertureSize</code> (3, 5 ou 7; tamanho do Sobel) e <code>L2gradient</code> (como calcular a magnitude).</p>
+  </div>
+  <div class="lab" id="labcanny">
+    <div class="lab-head"><h3>Canny passo a passo</h3>
+      <div class="segmented" role="group" aria-label="Presets">
+        <button class="seg" data-cn="30,60">30 / 60</button>
+        <button class="seg" data-cn="100,200">100 / 200</button>
+        <button class="seg" data-cn="150,300">150 / 300</button>
+      </div>
+    </div>
+    <div class="fields">
+      <div class="slider"><span class="lbl">threshold1 (inferior)</span><input id="cn1" type="range" min="0" max="500" step="5" value="100"><output></output></div>
+      <div class="slider"><span class="lbl">threshold2 (superior)</span><input id="cn2" type="range" min="0" max="600" step="5" value="200"><output></output></div>
+      <div class="field"><label><input type="checkbox" id="cnblur" checked> Suavização gaussiana (etapa 1)</label></div>
+    </div>
+    <div class="cvs">
+      <figure><canvas class="cv" id="cgray" width="320" height="240"></canvas><figcaption>Escala de cinza</figcaption></figure>
+      <figure><canvas class="cv" id="cgrad" width="320" height="240"></canvas><figcaption>Magnitude do gradiente</figcaption></figure>
+      <figure><canvas class="cv" id="cedge" width="320" height="240"></canvas><figcaption>Bordas (Canny)</figcaption></figure>
+    </div>
+    <div class="readout" style="margin-top:14px" id="cnout"></div>
+    <p class="hint" style="margin-top:12px">Desafio do slide: compare 30/60, 100/200 e 150/300. Qual achou mais detalhes? O que houve com os contornos fracos? Ligue o ruído da imagem de teste e a suavização para ver o que ela faz. Mesmo com tudo certo, o Canny <strong>não sabe</strong> que um contorno é uma bola ou um carro.</p>
+  </div>
+</section>
+
+<!-- ============ HSV ============ -->
+<section id="hsv">
+  <h2><span class="num">Aula 15 · laboratório</span>HSV, máscaras e segmentação por cor</h2>
+  <div class="prose">
+    <p><strong>HSV</strong>: <strong>H</strong>ue (matiz: qual cor), <strong>S</strong>aturation (pureza; quanto menor, mais cinza), <strong>V</strong>alue (brilho). No OpenCV (uint8): <strong>H de 0 a 179</strong>, S e V de 0 a 255 (e não 0–360° como em outras representações). Para segmentar por cor, o HSV costuma ser mais intuitivo que o BGR, porque a cor fica concentrada no canal H.</p>
+    <p><strong>Segmentação</strong> divide a imagem em regiões com certas características (cor, intensidade, textura, forma). Uma <strong>máscara</strong> é uma imagem binária: 255 (branco) = pixel selecionado, 0 (preto) = ignorado.</p>
+<pre>hsv  = cv2.<b>cvtColor</b>(imagem, cv2.COLOR_BGR2HSV)
+m1   = cv2.<b>inRange</b>(hsv, np.array([0,100,100]),   np.array([10,255,255]))    <i># vermelho (início)</i>
+m2   = cv2.<b>inRange</b>(hsv, np.array([170,100,100]), np.array([179,255,255]))   <i># vermelho (fim)</i>
+masc = cv2.<b>bitwise_or</b>(m1, m2)                                              <i># une as duas faixas</i>
+res  = cv2.<b>bitwise_and</b>(imagem, imagem, mask=masc)                          <i># mantém só o selecionado</i></pre>
+    <p>O <strong>vermelho aparece nas duas pontas</strong> da escala H (perto de 0 e de 179), por isso duas máscaras combinadas com <code>bitwise_or</code>. A iluminação também interfere: sombras, reflexos e o tipo de luz mudam os valores, e os limites precisam ser ajustados.</p>
+  </div>
+  <div class="lab" id="labhsv">
+    <div class="lab-head"><h3>Segmentação por cor</h3>
+      <div class="segmented" role="group" aria-label="Cor">
+        <button class="seg" data-hsv="red">Vermelho</button>
+        <button class="seg" data-hsv="green">Verde</button>
+        <button class="seg" data-hsv="blue">Azul</button>
+        <button class="seg" data-hsv="yellow">Amarelo</button>
+      </div>
+    </div>
+    <div class="fields">
+      <div class="slider"><span class="lbl">H mínimo</span><input id="hmin" type="range" min="0" max="179" value="0"><output></output></div>
+      <div class="slider"><span class="lbl">H máximo</span><input id="hmax" type="range" min="0" max="179" value="10"><output></output></div>
+      <div class="slider"><span class="lbl">S mínimo</span><input id="smin" type="range" min="0" max="255" value="100"><output></output></div>
+      <div class="slider"><span class="lbl">V mínimo</span><input id="vmin" type="range" min="0" max="255" value="100"><output></output></div>
+      <div class="field"><label><input type="checkbox" id="hred" checked> Incluir 2ª faixa do vermelho (170–179)</label></div>
+    </div>
+    <div class="cvs">
+      <figure><canvas class="cv" id="hhue" width="320" height="240"></canvas><figcaption>Matiz (H) em cores</figcaption></figure>
+      <figure><canvas class="cv" id="hmask" width="320" height="240"></canvas><figcaption>Máscara</figcaption></figure>
+      <figure><canvas class="cv" id="hres" width="320" height="240"></canvas><figcaption>Resultado + centro</figcaption></figure>
+    </div>
+    <div class="readout" style="margin-top:14px" id="hout"></div>
+    <p class="hint" style="margin-top:12px">Experimentos do slide: baixe o S mínimo (entram cores lavadas); suba o V mínimo (as regiões sombreadas somem). Repare na bola vermelha sombreada: com V mínimo alto ela não é detectada, ilustrando como a iluminação atrapalha.</p>
+  </div>
+</section>
+
+<!-- ============ JOGO ============ -->
+<section id="jogo">
+  <h2><span class="num">Aula 15 · aplicação</span>Visão computacional como controle de jogo</h2>
+  <div class="prose">
+    <p>Um jogo sem teclado nem mouse: a webcam captura o movimento, o computador <strong>identifica um objeto pela cor</strong> e o objeto detectado move o jogador. Ele não precisa saber o que é uma bolinha, só <strong>localizar a região da cor e calcular sua posição</strong>.</p>
+    <ol>
+      <li>Segmentar a cor (máscara HSV).</li>
+      <li>Achar contornos: <code>cv2.findContours()</code> → área, largura/altura, posição, centro.</li>
+      <li>Centro por momentos: <code>cx = m10 / m00</code>, <code>cy = m01 / m00</code> (o "ponto de equilíbrio" da região; <code>m00</code> é a área).</li>
+      <li>Acerto: distância entre centros <code>d = √((cx − xt)² + (cy − yt)²)</code>; se <code>d &lt; raio_alvo</code>, acertou.</li>
+      <li>Regras: +10 pontos por alvo, o alvo muda de lugar, vence com 50 pontos (opcionalmente, com limite de tempo).</li>
+    </ol>
+<pre>momentos = cv2.<b>moments</b>(contorno)
+<b>if</b> momentos["m00"] != 0:
+    cx = int(momentos["m10"] / momentos["m00"])
+    cy = int(momentos["m01"] / momentos["m00"])
+    cv2.<b>circle</b>(imagem, (cx, cy), 5, (0, 255, 0), -1)
+
+distancia = np.sqrt((cx - alvo_x)**2 + (cy - alvo_y)**2)
+<b>if</b> distancia &lt; raio_alvo:
+    pontuacao += 10</pre>
+  </div>
+
+  <div class="lab game" id="labgame">
+    <div class="lab-head"><h3>Jogo dos alvos</h3>
+      <div class="segmented" role="group" aria-label="Controle">
+        <button class="seg" data-ctl="mouse" aria-pressed="true">Mouse = objeto</button>
+        <button class="seg" data-ctl="cam" aria-pressed="false">Webcam (cor)</button>
+      </div>
+    </div>
+    <div class="fields">
+      <div class="field"><label for="gcor">Cor a rastrear (webcam)</label><select id="gcor"><option value="red">Vermelho</option><option value="green">Verde</option><option value="blue" selected>Azul</option><option value="yellow">Amarelo</option></select></div>
+      <div class="field"><label><input type="checkbox" id="gtempo"> Limite de 30 s</label></div>
+    </div>
+    <canvas class="cv smooth" id="gcv" width="480" height="360" aria-label="Área do jogo"></canvas>
+    <div class="ctrls"><button class="ctrl" id="gstart">Iniciar</button><span class="mono" id="ginfo">Pontos: 0</span></div>
+    <p class="hint" style="margin-top:12px">Modo mouse: o cursor faz o papel do centro do objeto detectado. Modo webcam: pede permissão da câmera (o vídeo é processado só aqui, nada é enviado). Segure um objeto da cor escolhida em frente à câmera, de preferência com boa luz. O centro é o de <em>todos</em> os pixels da máscara (a versão da aula usa o maior contorno).</p>
+  </div>
+</section>
+
+<section id="autoteste">
+  <h2><span class="num">Último passo</span>Autoteste</h2>
+  <p class="prose">Responda de cabeça e só então clique para conferir.</p>
+  <div class="cards" id="cards"></div>
+  <div class="pager"><a href="pln.html">← PLN</a><a href="simulado2.html">Simulado das aulas novas →</a></div>
+</section>
+
+</main>
+</div>
+
+<footer>
+  <p>Fonte: slides da aula 15 (Visão computacional). Bibliografia: Russell &amp; Norvig, <em>Inteligência Artificial: Uma Abordagem Moderna</em>, 2022.</p>
+</footer>
+</div>
+
+<script src="comum.js"></script>
+<script>
+(function(){
+  "use strict";
+  ligarSliders();
+  sumarioAtivo();
+  var $ = function(id){ return document.getElementById(id); };
+  var fmt = function(x, d){ return (Math.round(x * Math.pow(10, d)) / Math.pow(10, d)).toString().replace(".", ","); };
+  var clamp = function(v, a, b){ return Math.max(a, Math.min(b, v)); };
+
+  /* ============ grade 8x8 ============ */
+  var G = [], modoPx = "val", pintando = false, selPx = null;
+  for (var i = 0; i < 64; i++) G.push(0);
+  var preset = {
+    borda: function(r,c){ return c < 4 ? 20 : 220; },
+    grad:  function(r,c){ return Math.round(c * 255 / 7); },
+    quad:  function(r,c){ return (r >= 2 && r <= 5 && c >= 2 && c <= 5) ? 230 : 25; },
+    zero:  function(){ return 0; }
+  };
+  function sobel(r, c){
+    if (r < 1 || c < 1 || r > 6 || c > 6) return null;
+    var p = function(rr, cc){ return G[rr*8 + cc]; };
+    var gx = -p(r-1,c-1) + p(r-1,c+1) - 2*p(r,c-1) + 2*p(r,c+1) - p(r+1,c-1) + p(r+1,c+1);
+    var gy = -p(r-1,c-1) - 2*p(r-1,c) - p(r-1,c+1) + p(r+1,c-1) + 2*p(r+1,c) + p(r+1,c+1);
+    return { gx:gx, gy:gy, m:Math.abs(gx) + Math.abs(gy) };
+  }
+  function desenhaPx(){
+    var h = "", host = $("pxgrid");
+    if (!host.children.length){
+      for (var k = 0; k < 64; k++){ var d = document.createElement("div"); d.setAttribute("data-i", k); host.appendChild(d); }
+    }
+    for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++){
+      var el = host.children[r*8 + c], v = G[r*8 + c], txt, bg;
+      if (modoPx === "grad"){
+        var s = sobel(r, c);
+        txt = s ? s.m : "·";
+        var t = s ? clamp(s.m / 1020, 0, 1) : 0;
+        var gv = Math.round(255 * t); bg = "rgb(" + gv + "," + gv + "," + gv + ")"; el.style.color = gv > 140 ? "#000" : "#fff";
+      } else { txt = v; bg = "rgb(" + v + "," + v + "," + v + ")"; el.style.color = v > 140 ? "#000" : "#fff"; }
+      el.style.background = bg; el.textContent = txt;
+      el.style.outline = (selPx === r*8 + c) ? "2px solid var(--accent)" : "none";
+    }
+    var info = '<div class="row"><span class="k">Pixel</span><span class="mono">' + (selPx == null ? "clique numa célula" : "linha " + Math.floor(selPx/8) + ", coluna " + (selPx%8) + " → " + G[selPx]) + '</span></div>';
+    if (selPx != null){
+      var s2 = sobel(Math.floor(selPx/8), selPx%8);
+      info += '<div class="row"><span class="k">Sobel</span><span class="mono">' + (s2 ? "Gx = " + s2.gx + ", Gy = " + s2.gy + ", |Gx|+|Gy| = " + s2.m : "borda da grade (sem vizinhos)") + '</span></div>';
+    }
+    info += '<div class="row"><span class="k">Em 8 bits</span><span class="mono">0 = preto · 255 = branco · 64 pixels = 64 valores</span></div>';
+    $("pxinfo").innerHTML = info;
+  }
+  function pinta(e){
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    if (!el || el.parentNode !== $("pxgrid")) return;
+    var idx = parseInt(el.getAttribute("data-i"), 10);
+    G[idx] = parseInt($("pxbrush").value, 10); selPx = idx; desenhaPx();
+  }
+  $("pxgrid").addEventListener("pointerdown", function(e){ pintando = true; pinta(e); });
+  window.addEventListener("pointerup", function(){ pintando = false; });
+  $("pxgrid").addEventListener("pointermove", function(e){ if (pintando) pinta(e); });
+  document.querySelectorAll("[data-pre]").forEach(function(b){
+    b.onclick = function(){ var f = preset[b.getAttribute("data-pre")]; for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) G[r*8+c] = f(r, c); desenhaPx(); };
+  });
+  document.querySelectorAll("[data-px]").forEach(function(b){
+    b.onclick = function(){ modoPx = b.getAttribute("data-px");
+      document.querySelectorAll("[data-px]").forEach(function(o){ o.setAttribute("aria-pressed", o === b ? "true" : "false"); }); desenhaPx(); };
+  });
+  preset.quad && (function(){ for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) G[r*8+c] = preset.quad(r, c); })();
+  desenhaPx();
+
+  /* resolução */
+  function res(){
+    var w = parseInt($("rw").value, 10) || 0, h = parseInt($("rh").value, 10) || 0, c = parseInt($("rc").value, 10);
+    var px = w*h, val = px*c, kib = val/1024;
+    $("resout").innerHTML =
+      '<div class="row"><span class="k">Pixels</span><span class="mono">' + w + ' × ' + h + ' = ' + px.toLocaleString("pt-BR") + '</span></div>' +
+      '<div class="row"><span class="k">Valores</span><span class="mono">' + px.toLocaleString("pt-BR") + ' × ' + c + ' = ' + val.toLocaleString("pt-BR") + '</span></div>' +
+      '<div class="row"><span class="k">Memória</span><span class="mono">' + (kib < 1024 ? fmt(kib, 1) + ' KiB' : fmt(kib/1024, 2) + ' MiB') + ' (1 byte por valor, sem compressão)</span></div>';
+  }
+  ["rw","rh","rc"].forEach(function(id){ $(id).addEventListener("input", res); });
+  document.querySelectorAll("[data-res]").forEach(function(b){ b.onclick = function(){ var p = b.getAttribute("data-res").split(","); $("rw").value = p[0]; $("rh").value = p[1]; $("rc").value = p[2]; res(); }; });
+  res();
+
+  /* ============ cores ============ */
+  function rgb2hsv(r, g, b){
+    var mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx - mn, h = 0;
+    if (d){
+      if (mx === r) h = 60 * (((g - b) / d) % 6);
+      else if (mx === g) h = 60 * ((b - r) / d + 2);
+      else h = 60 * ((r - g) / d + 4);
+      if (h < 0) h += 360;
+    }
+    return [Math.round(h / 2) % 180, mx ? Math.round(d / mx * 255) : 0, mx];
+  }
+  function cor(){
+    var hx = $("corin").value, r = parseInt(hx.substr(1,2),16), g = parseInt(hx.substr(3,2),16), b = parseInt(hx.substr(5,2),16);
+    var hsv = rgb2hsv(r, g, b), y = 0.299*r + 0.587*g + 0.114*b, media = (r+g+b)/3;
+    $("corsw").style.background = hx;
+    $("corout").innerHTML =
+      '<div class="row"><span class="k">RGB</span><span class="mono">(' + r + ', ' + g + ', ' + b + ')</span></div>' +
+      '<div class="row"><span class="k">BGR (OpenCV)</span><span class="mono">(' + b + ', ' + g + ', ' + r + ')</span></div>' +
+      '<div class="row"><span class="k">HSV (OpenCV)</span><span class="mono">H = ' + hsv[0] + ' (0–179) · S = ' + hsv[1] + ' · V = ' + hsv[2] + '</span></div>' +
+      '<div class="row"><span class="k">Cinza</span><span class="mono">0,299·' + r + ' + 0,587·' + g + ' + 0,114·' + b + ' = <b>' + Math.round(y) + '</b> (a média simples daria ' + Math.round(media) + ')</span></div>';
+  }
+  $("corin").addEventListener("input", cor); cor();
+
+  /* ============ imagem de teste ============ */
+  var W = 320, H = 240, src = $("src"), sx = src.getContext("2d", { willReadFrequently:true });
+  var usaUpload = false, imgUp = null;
+  function sintetica(){
+    var g = sx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#9a9aa2"); g.addColorStop(1, "#5f5f68");
+    sx.fillStyle = g; sx.fillRect(0, 0, W, H);
+    sx.fillStyle = "#e8e8e8"; sx.fillRect(18, 150, 70, 60);               /* retângulo claro */
+    function bola(x, y, r, cor, escuro){
+      var rg = sx.createRadialGradient(x - r*0.3, y - r*0.3, r*0.1, x, y, r);
+      rg.addColorStop(0, cor[0]); rg.addColorStop(1, cor[1]);
+      sx.fillStyle = rg; sx.beginPath(); sx.arc(x, y, r, 0, 7); sx.fill();
+    }
+    bola(75, 70, 38, ["#ff4a3d", "#c61a14"]);                              /* vermelha */
+    bola(170, 60, 30, ["#44d86a", "#12862e"]);                             /* verde */
+    bola(255, 100, 36, ["#4d8dff", "#1648c4"]);                            /* azul */
+    bola(190, 170, 32, ["#ffe14a", "#d6a800"]);                            /* amarela */
+    bola(280, 195, 22, ["#7a1a14", "#3a0a08"]);                            /* vermelha na sombra */
+    sx.strokeStyle = "#222"; sx.lineWidth = 3; sx.strokeRect(105, 155, 50, 50);
+  }
+  function ruido(){
+    var d = sx.getImageData(0, 0, W, H), p = d.data;
+    for (var i = 0; i < p.length; i += 4){ var n = (Math.random() - 0.5) * 70; p[i] = clamp(p[i] + n, 0, 255); p[i+1] = clamp(p[i+1] + n, 0, 255); p[i+2] = clamp(p[i+2] + n, 0, 255); }
+    sx.putImageData(d, 0, 0);
+  }
+  function carregaFonte(){
+    sx.clearRect(0, 0, W, H);
+    if (usaUpload && imgUp){
+      var esc = Math.min(W / imgUp.width, H / imgUp.height), w = imgUp.width * esc, h = imgUp.height * esc;
+      sx.fillStyle = "#000"; sx.fillRect(0, 0, W, H);
+      sx.drawImage(imgUp, (W - w)/2, (H - h)/2, w, h);
+    } else sintetica();
+    if ($("imgnoise").checked) ruido();
+    processa();
+  }
+  $("imgfile").addEventListener("change", function(){
+    var f = this.files && this.files[0]; if (!f) return;
+    var url = URL.createObjectURL(f), im = new Image();
+    im.onload = function(){ imgUp = im; usaUpload = true; carregaFonte(); URL.revokeObjectURL(url); };
+    im.src = url;
+  });
+  $("imgnoise").addEventListener("change", carregaFonte);
+  $("imgsint").onclick = function(){ usaUpload = false; $("imgfile").value = ""; carregaFonte(); };
+
+  /* ============ Canny ============ */
+  function paraCinza(d){
+    var p = d.data, g = new Float32Array(W*H);
+    for (var i = 0, k = 0; i < p.length; i += 4, k++) g[k] = Math.round(0.299*p[i] + 0.587*p[i+1] + 0.114*p[i+2]);
+    return g;
+  }
+  function gauss(g){
+    var k = [1,4,6,4,1], tmp = new Float32Array(W*H), out = new Float32Array(W*H), x, y, j;
+    for (y = 0; y < H; y++) for (x = 0; x < W; x++){ var s = 0; for (j = -2; j <= 2; j++) s += k[j+2] * g[y*W + clamp(x+j, 0, W-1)]; tmp[y*W+x] = s / 16; }
+    for (y = 0; y < H; y++) for (x = 0; x < W; x++){ var s2 = 0; for (j = -2; j <= 2; j++) s2 += k[j+2] * tmp[clamp(y+j, 0, H-1)*W + x]; out[y*W+x] = s2 / 16; }
+    return out;
+  }
+  function cannyCompleto(gray, t1, t2, suave){
+    var g = suave ? gauss(gray) : gray, mag = new Float32Array(W*H), dir = new Uint8Array(W*H), x, y;
+    for (y = 1; y < H-1; y++) for (x = 1; x < W-1; x++){
+      var i = y*W + x;
+      var gx = -g[i-W-1] + g[i-W+1] - 2*g[i-1] + 2*g[i+1] - g[i+W-1] + g[i+W+1];
+      var gy = -g[i-W-1] - 2*g[i-W] - g[i-W+1] + g[i+W-1] + 2*g[i+W] + g[i+W+1];
+      mag[i] = Math.abs(gx) + Math.abs(gy);                      /* L1, padrão do OpenCV (L2gradient=False) */
+      var ang = Math.atan2(gy, gx) * 180 / Math.PI; if (ang < 0) ang += 180;
+      dir[i] = (ang < 22.5 || ang >= 157.5) ? 0 : (ang < 67.5 ? 1 : (ang < 112.5 ? 2 : 3));
+    }
+    var nms = new Float32Array(W*H);
+    for (y = 1; y < H-1; y++) for (x = 1; x < W-1; x++){
+      var i2 = y*W + x, m = mag[i2], a, b;
+      switch (dir[i2]){ case 0: a = mag[i2-1]; b = mag[i2+1]; break; case 1: a = mag[i2-W+1]; b = mag[i2+W-1]; break; case 2: a = mag[i2-W]; b = mag[i2+W]; break; default: a = mag[i2-W-1]; b = mag[i2+W+1]; }
+      nms[i2] = (m >= a && m >= b) ? m : 0;
+    }
+    var estado = new Uint8Array(W*H), pilha = [];                  /* 2 = forte, 1 = fraca */
+    for (var q = 0; q < W*H; q++){ if (nms[q] >= t2){ estado[q] = 2; pilha.push(q); } else if (nms[q] >= t1 && nms[q] > 0) estado[q] = 1; }
+    var fortes = pilha.length;
+    while (pilha.length){
+      var c = pilha.pop(), cx0 = c % W, cy0 = (c / W) | 0;
+      for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++){
+        var nx = cx0 + dx, ny = cy0 + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+        var ni = ny*W + nx; if (estado[ni] === 1){ estado[ni] = 2; pilha.push(ni); }
+      }
+    }
+    var total = 0, fracasDescartadas = 0;
+    for (var z = 0; z < W*H; z++){ if (estado[z] === 2) total++; else if (estado[z] === 1) fracasDescartadas++; }
+    return { mag:mag, edge:estado, total:total, fortes:fortes, descartadas:fracasDescartadas };
+  }
+  function pintaGray(canvasId, arr, escala){
+    var cv = $(canvasId), cx = cv.getContext("2d"), im = cx.createImageData(W, H);
+    for (var i = 0, k = 0; i < arr.length; i++, k += 4){ var v = clamp(arr[i] * escala, 0, 255); im.data[k] = im.data[k+1] = im.data[k+2] = v; im.data[k+3] = 255; }
+    cx.putImageData(im, 0, 0);
+  }
+  function canny(){
+    var d = sx.getImageData(0, 0, W, H), gray = paraCinza(d);
+    var t1 = parseFloat($("cn1").value), t2 = parseFloat($("cn2").value);
+    if (t1 > t2){ var t = t1; t1 = t2; t2 = t; }
+    var r = cannyCompleto(gray, t1, t2, $("cnblur").checked);
+    pintaGray("cgray", gray, 1);
+    pintaGray("cgrad", r.mag, 255 / 600);
+    var e = new Float32Array(W*H); for (var i = 0; i < e.length; i++) e[i] = r.edge[i] === 2 ? 255 : 0;
+    pintaGray("cedge", e, 1);
+    $("cnout").innerHTML =
+      '<div class="row"><span class="k">Limites</span><span class="mono">threshold1 = ' + t1 + ', threshold2 = ' + t2 + (parseFloat($("cn1").value) > parseFloat($("cn2").value) ? ' (trocados: o menor é sempre o inferior)' : '') + '</span></div>' +
+      '<div class="row"><span class="k">Pixels de borda</span><span class="mono">' + r.total + ' de ' + (W*H) + ' (' + fmt(r.total / (W*H) * 100, 2) + ' %)</span></div>' +
+      '<div class="row"><span class="k">Histerese</span><span class="mono">' + r.fortes + ' pontos fortes iniciais · ' + r.descartadas + ' fracos sem conexão descartados</span></div>';
+  }
+  ["cn1","cn2"].forEach(function(id){ $(id).addEventListener("input", canny); });
+  $("cnblur").addEventListener("change", canny);
+  document.querySelectorAll("[data-cn]").forEach(function(b){ b.onclick = function(){ var p = b.getAttribute("data-cn").split(","); $("cn1").value = p[0]; $("cn2").value = p[1]; $("cn1").dispatchEvent(new Event("input")); $("cn2").dispatchEvent(new Event("input")); canny(); }; });
+
+  /* ============ HSV ============ */
+  var PRE = { red:[0,10,100,100,true], green:[35,85,100,100,false], blue:[100,130,100,100,false], yellow:[20,34,100,100,false] };
+  function faixa(){
+    return { hmin:parseInt($("hmin").value,10), hmax:parseInt($("hmax").value,10), smin:parseInt($("smin").value,10), vmin:parseInt($("vmin").value,10), r2:$("hred").checked };
+  }
+  function dentro(h, s, v, f){
+    if (s < f.smin || v < f.vmin) return false;
+    if (h >= f.hmin && h <= f.hmax) return true;
+    return f.r2 && h >= 170 && h <= 179;
+  }
+  function segmenta(){
+    var d = sx.getImageData(0, 0, W, H), p = d.data, f = faixa();
+    var hc = $("hhue").getContext("2d"), mc = $("hmask").getContext("2d"), rc = $("hres").getContext("2d");
+    var hi = hc.createImageData(W, H), mi = mc.createImageData(W, H), ri = rc.createImageData(W, H);
+    var m00 = 0, m10 = 0, m01 = 0;
+    for (var i = 0, k = 0; i < p.length; i += 4, k++){
+      var hsv = rgb2hsv(p[i], p[i+1], p[i+2]), ok = dentro(hsv[0], hsv[1], hsv[2], f);
+      /* matiz como cor: S e V máximos para visualizar só o H */
+      var hh = hsv[0] * 2, c = 1, x = 1 - Math.abs((hh / 60) % 2 - 1), rr, gg, bb;
+      if (hh < 60){ rr = c; gg = x; bb = 0; } else if (hh < 120){ rr = x; gg = c; bb = 0; } else if (hh < 180){ rr = 0; gg = c; bb = x; }
+      else if (hh < 240){ rr = 0; gg = x; bb = c; } else if (hh < 300){ rr = x; gg = 0; bb = c; } else { rr = c; gg = 0; bb = x; }
+      var vis = hsv[1] < 25 || hsv[2] < 25 ? 0.25 : 1;
+      hi.data[i] = rr*255*vis; hi.data[i+1] = gg*255*vis; hi.data[i+2] = bb*255*vis; hi.data[i+3] = 255;
+      mi.data[i] = mi.data[i+1] = mi.data[i+2] = ok ? 255 : 0; mi.data[i+3] = 255;
+      if (ok){ ri.data[i] = p[i]; ri.data[i+1] = p[i+1]; ri.data[i+2] = p[i+2]; var x0 = k % W, y0 = (k / W) | 0; m00++; m10 += x0; m01 += y0; }
+      ri.data[i+3] = 255;
+    }
+    hc.putImageData(hi, 0, 0); mc.putImageData(mi, 0, 0); rc.putImageData(ri, 0, 0);
+    var txt;
+    if (m00 > 20){
+      var cx = Math.round(m10 / m00), cy = Math.round(m01 / m00);
+      rc.strokeStyle = "#0f0"; rc.lineWidth = 2; rc.beginPath(); rc.arc(cx, cy, 7, 0, 7); rc.stroke();
+      rc.beginPath(); rc.moveTo(cx-12, cy); rc.lineTo(cx+12, cy); rc.moveTo(cx, cy-12); rc.lineTo(cx, cy+12); rc.stroke();
+      txt = 'm00 = ' + m00 + ' · cx = m10/m00 = ' + cx + ' · cy = m01/m00 = ' + cy;
+    } else txt = 'Quase nenhum pixel selecionado (m00 = ' + m00 + ').';
+    $("hout").innerHTML =
+      '<div class="row"><span class="k">inferior</span><span class="mono">[' + f.hmin + ', ' + f.smin + ', ' + f.vmin + ']</span></div>' +
+      '<div class="row"><span class="k">superior</span><span class="mono">[' + f.hmax + ', 255, 255]' + (f.r2 ? ' + faixa [170, ' + f.smin + ', ' + f.vmin + '] a [179, 255, 255]' : '') + '</span></div>' +
+      '<div class="row"><span class="k">Centro</span><span class="mono">' + txt + '</span></div>';
+  }
+  ["hmin","hmax","smin","vmin"].forEach(function(id){ $(id).addEventListener("input", segmenta); });
+  $("hred").addEventListener("change", segmenta);
+  document.querySelectorAll("[data-hsv]").forEach(function(b){
+    b.onclick = function(){
+      var p = PRE[b.getAttribute("data-hsv")];
+      $("hmin").value = p[0]; $("hmax").value = p[1]; $("smin").value = p[2]; $("vmin").value = p[3]; $("hred").checked = p[4];
+      ["hmin","hmax","smin","vmin"].forEach(function(id){ $(id).dispatchEvent(new Event("input")); });
+      segmenta();
+    };
+  });
+  function processa(){ canny(); segmenta(); }
+  carregaFonte();
+
+  /* ============ jogo ============ */
+  var gc = $("gcv"), gx = gc.getContext("2d"), GW = gc.width, GH = gc.height;
+  var J = { ativo:false, ctl:"mouse", obj:null, alvo:null, pontos:0, fim:0, raf:0, stream:null, vid:null, mini:document.createElement("canvas"), msg:"" };
+  J.mini.width = 160; J.mini.height = 120;
+  var mx0 = J.mini.getContext("2d", { willReadFrequently:true });
+  var RAIO = 30;
+  function novoAlvo(){ J.alvo = [RAIO + 10 + Math.random()*(GW - 2*RAIO - 20), RAIO + 10 + Math.random()*(GH - 2*RAIO - 20)]; }
+  gc.addEventListener("pointermove", function(e){
+    if (J.ctl !== "mouse") return;
+    var r = gc.getBoundingClientRect(); J.obj = [(e.clientX - r.left) / r.width * GW, (e.clientY - r.top) / r.height * GH];
+  });
+  document.querySelectorAll("[data-ctl]").forEach(function(b){
+    b.onclick = function(){ J.ctl = b.getAttribute("data-ctl");
+      document.querySelectorAll("[data-ctl]").forEach(function(o){ o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+      if (J.ctl === "mouse") paraCamera(); };
+  });
+  function paraCamera(){ if (J.stream){ J.stream.getTracks().forEach(function(t){ t.stop(); }); J.stream = null; } }
+  function acharCor(){
+    var f = (function(){ var p = PRE[$("gcor").value]; return { hmin:p[0], hmax:p[1], smin:p[2], vmin:p[3], r2:p[4] }; })();
+    mx0.save(); mx0.translate(160, 0); mx0.scale(-1, 1); mx0.drawImage(J.vid, 0, 0, 160, 120); mx0.restore();
+    var d = mx0.getImageData(0, 0, 160, 120).data, m00 = 0, m10 = 0, m01 = 0;
+    for (var i = 0, k = 0; i < d.length; i += 4, k++){
+      var hsv = rgb2hsv(d[i], d[i+1], d[i+2]);
+      if (dentro(hsv[0], hsv[1], hsv[2], f)){ m00++; m10 += k % 160; m01 += (k / 160) | 0; }
+    }
+    if (m00 > 25) J.obj = [m10 / m00 / 160 * GW, m01 / m00 / 120 * GH];
+    else J.obj = null;
+  }
+  function quadro(ts){
+    if (!J.ativo) return;
+    if (J.ctl === "cam" && J.vid && J.vid.readyState >= 2) acharCor();
+    gx.fillStyle = corTema("--surface-2"); gx.fillRect(0, 0, GW, GH);
+    if (J.ctl === "cam" && J.vid && J.vid.readyState >= 2){ gx.globalAlpha = 0.45; gx.save(); gx.translate(GW, 0); gx.scale(-1, 1); gx.drawImage(J.vid, 0, 0, GW, GH); gx.restore(); gx.globalAlpha = 1; }
+    gx.lineWidth = 3; gx.strokeStyle = corTema("--accent"); gx.beginPath(); gx.arc(J.alvo[0], J.alvo[1], RAIO, 0, 7); gx.stroke();
+    gx.fillStyle = corTema("--accent"); gx.globalAlpha = 0.15; gx.fill(); gx.globalAlpha = 1;
+    if (J.obj){
+      gx.fillStyle = "#17c24a"; gx.beginPath(); gx.arc(J.obj[0], J.obj[1], 7, 0, 7); gx.fill();
+      var dist = Math.hypot(J.obj[0] - J.alvo[0], J.obj[1] - J.alvo[1]);
+      if (dist < RAIO){ J.pontos += 10; novoAlvo(); }
+    }
+    var tempoTxt = "";
+    if ($("gtempo").checked){
+      var rest = Math.max(0, Math.ceil((J.fim - ts) / 1000)); tempoTxt = " · Tempo: " + rest + " s";
+      if (rest <= 0) return terminaJogo("Tempo esgotado! Pontos: " + J.pontos);
+    }
+    gx.fillStyle = corTema("--ink"); gx.font = "16px system-ui"; gx.fillText("Pontos: " + J.pontos, 12, 24);
+    $("ginfo").textContent = "Pontos: " + J.pontos + tempoTxt + (J.ctl === "cam" && !J.obj ? " · objeto não detectado" : "");
+    if (J.pontos >= 50) return terminaJogo("Você venceu! 50 pontos.");
+    J.raf = requestAnimationFrame(quadro);
+  }
+  function terminaJogo(msg){
+    J.ativo = false; cancelAnimationFrame(J.raf);
+    gx.fillStyle = "rgba(0,0,0,.6)"; gx.fillRect(0, 0, GW, GH);
+    gx.fillStyle = "#fff"; gx.font = "bold 22px system-ui"; gx.textAlign = "center"; gx.fillText(msg, GW/2, GH/2); gx.textAlign = "start";
+    $("ginfo").textContent = msg; $("gstart").textContent = "Jogar de novo";
+  }
+  function comecar(){
+    J.pontos = 0; novoAlvo(); J.ativo = true; $("gstart").textContent = "Reiniciar";
+    J.fim = performance.now() + 30000; J.obj = null;
+    cancelAnimationFrame(J.raf); J.raf = requestAnimationFrame(quadro);
+  }
+  $("gstart").onclick = function(){
+    if (J.ctl === "cam" && !J.stream){
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ $("ginfo").textContent = "Este navegador/contexto não permite acessar a câmera (precisa de https ou localhost)."; return; }
+      navigator.mediaDevices.getUserMedia({ video:{ width:640, height:480 } }).then(function(s){
+        J.stream = s; J.vid = document.createElement("video"); J.vid.muted = true; J.vid.playsInline = true; J.vid.srcObject = s;
+        J.vid.play().then(comecar);
+      }).catch(function(){ $("ginfo").textContent = "Câmera indisponível ou permissão negada. Use o modo mouse."; });
+    } else comecar();
+  };
+  window.addEventListener("pagehide", paraCamera);
+  novoAlvo(); gx.fillStyle = corTema("--surface-2"); gx.fillRect(0, 0, GW, GH);
+  gx.fillStyle = corTema("--ink-soft"); gx.font = "16px system-ui"; gx.textAlign = "center"; gx.fillText("Aperte Iniciar e acerte 5 alvos (10 pontos cada)", GW/2, GH/2); gx.textAlign = "start";
+
+  /* ============ flashcards ============ */
+  montarCards("cards", [
+    ["Diferencie processamento de imagens, visão computacional e IA.", "Processamento de imagens: modifica/melhora/extrai características (brilho, ruído, bordas). Visão computacional: interpreta o conteúdo (identificar um gato, contar objetos). IA: campo mais amplo (aprendizagem, raciocínio, planejamento, decisão)."],
+    ["Um programa que só altera o brilho de uma foto faz visão computacional?", "Não necessariamente: pode ser apenas processamento de imagens."],
+    ["Um sistema que aprende a distinguir gatos de cachorros usa qual abordagem?", "Aprendizado de máquina aplicado à visão computacional (por exemplo, uma rede neural treinada com imagens rotuladas)."],
+    ["As técnicas tradicionais ainda são úteis com a IA?", "Sim: filtragem, redução de ruído, detecção de bordas e preparação de imagens, e podem ser combinadas com modelos de ML."],
+    ["O que é um pixel e o que é resolução?", "Pixel: menor elemento de uma imagem digital. Resolução: quantidade de pixels, largura × altura (1920 × 1080 ≈ 2,07 milhões)."],
+    ["Quantos valores tem uma imagem 640 × 480 colorida e quanto ocupa?", "640 × 480 × 3 = 921 600 valores; a 1 byte cada, ≈ 900 KiB sem compressão."],
+    ["Por que o OpenCV usa BGR e como ficam as cores?", "Convenção histórica do OpenCV ao usar imread. Vermelho = (0,0,255) em BGR (255,0,0 em RGB); azul = (255,0,0) em BGR; verde é igual."],
+    ["O que significa shape (480, 640, 3) e dtype uint8?", "480 linhas, 640 colunas, 3 canais. uint8: inteiros sem sinal de 8 bits, valores de 0 a 255. A imagem cinza tem shape (480, 640)."],
+    ["Como o OpenCV converte para cinza?", "Com média ponderada pela sensibilidade do olho: Y = 0,299R + 0,587G + 0,114B (mais peso ao verde). Não é a média simples."],
+    ["O que é uma borda e como se mede?", "Região de mudança significativa de intensidade entre pixels vizinhos. Mede-se pelo gradiente (Gx, Gy) e sua magnitude √(Gx²+Gy²)."],
+    ["Quais as 5 etapas do Canny?", "1) suavização gaussiana; 2) gradientes; 3) supressão de não máximos; 4) limiarização dupla; 5) histerese."],
+    ["O que fazem threshold1 e threshold2 no Canny?", "Abaixo de threshold1: não é borda. Acima de threshold2: borda forte. Entre os dois: fraca, mantida só se conectada a uma forte (histerese). Limites baixos → mais bordas e ruído; altos → só as fortes."],
+    ["Detectar bordas é reconhecer objetos?", "Não. Canny destaca contornos e estruturas, mas não sabe o que são; reconhecimento (YOLO, CNNs, classificadores) produz informação semântica."],
+    ["O que é HSV e qual a faixa dos canais no OpenCV?", "Hue (matiz), Saturation (pureza), Value (brilho). No OpenCV uint8: H 0–179, S 0–255, V 0–255."],
+    ["Por que o vermelho exige duas máscaras em HSV?", "Porque o vermelho aparece nas duas pontas da escala H (perto de 0 e de 179). Faz-se inRange para [0–10] e [170–179] e une-se com bitwise_or."],
+    ["O que é uma máscara binária e o que fazem inRange e bitwise_and?", "Imagem em que 255 = selecionado e 0 = ignorado. inRange gera a máscara (255 dentro da faixa); bitwise_and(imagem, imagem, mask=masc) mantém só os pixels selecionados."],
+    ["Como a iluminação atrapalha a segmentação por cor?", "Sombras, reflexos e o tipo de luz alteram H/S/V: a mesma cor tem valores diferentes, áreas sombreadas podem não ser detectadas e os limites precisam de ajuste."],
+    ["Como achar o centro de um objeto segmentado e detectar o acerto no jogo?", "Contornos (findContours) e momentos: cx = m10/m00, cy = m01/m00. Acerto se a distância √((cx−xt)²+(cy−yt)²) < raio do alvo."]
+  ]);
+})();
+</script>
+<script src="theme.js" defer></script>
+</body>
+</html>
